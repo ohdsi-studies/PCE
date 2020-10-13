@@ -1,0 +1,8 @@
+"cohortId","atlasId","name","type"
+18941,18941,"Pooled cohort equation target - non-black male","target"
+18942,18942,"Pooled cohort equation target - non-black female","target"
+18943,18943,"Pooled cohort equation target - black female","target"
+18944,18944,"Pooled cohort equation target - black male","target"
+18945,18945,"Earliest of AMI ischemic stroke or cardiovascular death","outcome"
+18935,18935,"Acute myocardial infarction events","outcome"
+18936,18936,"Ischemic stroke events","outcome"

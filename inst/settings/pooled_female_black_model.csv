@@ -1,0 +1,11 @@
+"type","analysisId","covariateName","cohortId","atlasId","cohortName","startDay","endDay","count","ageInteraction","lnAgeInteraction","lnValue","aggregateMethod","imputationValue","covariateId","points"
+"cohortCovariate",456,"diabetes days before: -9999 days after: -1","17720","17720","diabetes",-9999,-1,0,FALSE,FALSE,FALSE,"na",0,17720456,0.874
+"cohortCovariate",456,"smoking days before: -730 days after: 60","18957","18957","smoking",-730,60,0,FALSE,FALSE,FALSE,"na",0,18957456,0.691
+"measurementCovariate",457,"Total_Cholesterol_mgdL","0","0","na",-365,60,0,FALSE,FALSE,TRUE,"recent",150,1457,0.94
+"measurementCovariate",457,"HDL-C_mgdL","0","0","na",-365,60,0,FALSE,FALSE,TRUE,"recent",50,2457,-18.92
+"measurementCovariate",457,"HDL-C_mgdL","0","0","na",-365,60,0,FALSE,TRUE,TRUE,"recent",50,3457,4.475
+"measurementCohortCovariate_in",459,"treated_Systolic_BP_mm_Hg","18946","18946","na",-365,60,0,FALSE,FALSE,TRUE,"recent",120,1459,29.291
+"measurementCohortCovariate_out",459,"untreated_Systolic_BP_mm_Hg","18946","18946","na",-365,60,0,FALSE,FALSE,TRUE,"recent",120,2459,27.82
+"measurementCohortCovariate_in",459,"treated_Systolic_BP_mm_Hg","18946","18946","na",-365,60,0,FALSE,TRUE,TRUE,"recent",120,3459,-6.432
+"measurementCohortCovariate_out",459,"untreated_Systolic_BP_mm_Hg","18946","18946","na",-365,60,0,FALSE,TRUE,TRUE,"recent",120,4459,-6.087
+"ageCovariate",458,"log(age)","0","0","na",0,0,0,FALSE,FALSE,FALSE,"na",0,1458,17.114
