@@ -1,4 +1,4 @@
-Package: PooledCohortvalidation
+Package: PCE
 Type: Package
 Title: A Package Skeleton for Replicating Published Prediction Models
 Version: 1.1.0

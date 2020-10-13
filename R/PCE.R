@@ -1,8 +1,8 @@
-# @file PooledCohortvalidation.R
+# @file PCE.R
 #
 # Copyright 2020 Observational Health Data Sciences and Informatics
 #
-# This file is part of PooledCohortvalidation
+# This file is part of PCE
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,9 +16,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#' PooledCohortvalidation
+#' PCE
 #'
 #' @docType package
-#' @name PooledCohortvalidation
+#' @name PCE
 #' @importFrom magrittr %>%
 NULL

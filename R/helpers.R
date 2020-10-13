@@ -1,6 +1,6 @@
 getAnalyses <- function(settings, outputFolder,cdmDatabaseName){
   
-  cohorts <- system.file("settings", 'CohortsToCreate.csv', package = "PooledCohortvalidation")
+  cohorts <- system.file("settings", 'CohortsToCreate.csv', package = "PCE")
   cohorts <- read.csv(cohorts)
   
   if(is.null(settings)){
@@ -9,7 +9,7 @@ getAnalyses <- function(settings, outputFolder,cdmDatabaseName){
     cohortsSettings$outcomeName <- cohorts$name[cohorts$type == 'outcome']
     colnames(cohortsSettings) <- c('targetId', 'targetName', 'outcomeId', 'outcomeName')
     
-    settingLoc <- system.file("settings", package = "PooledCohortvalidation")
+    settingLoc <- system.file("settings", package = "PCE")
     modelSettings <- data.frame(model = dir(settingLoc, pattern = '_model.csv'))
     modelSettings$modelSettingsId <- 1:nrow(modelSettings)
     analysesSettings <- merge(cohortsSettings, modelSettings)
@@ -60,7 +60,7 @@ getData <- function(connectionDetails,
                     cdmVersion){
   
   
-  pathToCustom <- system.file("settings", model, package = "PooledCohortvalidation")
+  pathToCustom <- system.file("settings", model, package = "PCE")
   varsToCreate <- utils::read.csv(pathToCustom)
 
   covSets <- list()
@@ -101,9 +101,9 @@ getData <- function(connectionDetails,
   measurementVarsToCreate <- varsToCreate[varsToCreate$type == 'measurementCovariate',]
   if(nrow(measurementVarsToCreate)>0){
   for(i in 1:nrow(measurementVarsToCreate)){
-    pathToConcept <- system.file("settings", paste0(measurementVarsToCreate$covariateName[i],'_concepts.csv'), package = "PooledCohortvalidation")
+    pathToConcept <- system.file("settings", paste0(measurementVarsToCreate$covariateName[i],'_concepts.csv'), package = "PCE")
     conceptSet <- read.csv(pathToConcept)$x
-    pathToScaleMap <- system.file("settings", paste0(measurementVarsToCreate$covariateName[i],'_scaleMap.rds'), package = "PooledCohortvalidation")
+    pathToScaleMap <- system.file("settings", paste0(measurementVarsToCreate$covariateName[i],'_scaleMap.rds'), package = "PCE")
     scaleMap <- readRDS(pathToScaleMap)
     
     covSets[[extra+nrow(cohortVarsToCreate)+i]] <- createMeasurementCovariateSettings(covariateName = measurementVarsToCreate$covariateName[i], 
@@ -129,7 +129,7 @@ getData <- function(connectionDetails,
   if(nrow(ageVarsToCreate)>0){
     for(i in 1:nrow(ageVarsToCreate)){
       
-      pathToAgeMap <- system.file("settings", paste0(paste0(gsub(' ', '_',gsub('\\)','_',gsub('\\(','_',ageVarsToCreate$covariateName[i])))),'_ageMap.rds'), package = "PooledCohortvalidation")
+      pathToAgeMap <- system.file("settings", paste0(paste0(gsub(' ', '_',gsub('\\)','_',gsub('\\(','_',ageVarsToCreate$covariateName[i])))),'_ageMap.rds'), package = "PCE")
       ageMap <- readRDS(pathToAgeMap)
       
       covSets[[extra+nrow(cohortVarsToCreate) +nrow(measurementVarsToCreate) +i]] <- createAgeCovariateSettings(covariateName = ageVarsToCreate$covariateName[i], 
@@ -146,9 +146,9 @@ getData <- function(connectionDetails,
   measurementCohortVarsToCreate <- varsToCreate[grep('measurementCohortCovariate',varsToCreate$type),]
   if(nrow(measurementCohortVarsToCreate)>0){
     for(i in 1:nrow(measurementCohortVarsToCreate)){
-      pathToConcept <- system.file("settings", paste0(measurementCohortVarsToCreate$covariateName[i],'_concepts.csv'), package = "PooledCohortvalidation")
+      pathToConcept <- system.file("settings", paste0(measurementCohortVarsToCreate$covariateName[i],'_concepts.csv'), package = "PCE")
       conceptSet <- read.csv(pathToConcept)$x
-      pathToScaleMap <- system.file("settings", paste0(measurementCohortVarsToCreate$covariateName[i],'_scaleMap.rds'), package = "PooledCohortvalidation")
+      pathToScaleMap <- system.file("settings", paste0(measurementCohortVarsToCreate$covariateName[i],'_scaleMap.rds'), package = "PCE")
       scaleMap <- readRDS(pathToScaleMap)
       
       covSets[[extra+nrow(cohortVarsToCreate) + nrow(measurementVarsToCreate) + nrow(ageVarsToCreate) +i]] <- createMeasurementCohortCovariateSettings(covariateName = measurementCohortVarsToCreate$covariateName[i], 
@@ -195,7 +195,7 @@ getData <- function(connectionDetails,
 
 getModel <- function(model = 'SimpleModel'){
   
-  pathToCustom <- system.file("settings", model, package = "PooledCohortvalidation")
+  pathToCustom <- system.file("settings", model, package = "PCE")
   coefficients <- utils::read.csv(pathToCustom)
   coefficients <- coefficients[,colnames(coefficients)%in%c('covariateId','points')]
  

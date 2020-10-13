@@ -1,8 +1,8 @@
-library(PooledCohortvalidation)
+library(PCE)
 # USER INPUTS
 #=======================
 # The folder where the study intermediate and result files will be written:
-outputFolder <- "./PooledCohortvalidationResults"
+outputFolder <- "./PCEResults"
 
 # Details for connecting to the server:
 dbms <- "you dbms"
@@ -25,7 +25,7 @@ cohortDatabaseSchema <- 'work database schema'
 oracleTempSchema <- NULL
 
 # table name where the cohorts will be generated
-cohortTable <- 'PooledCohortvalidationCohort'
+cohortTable <- 'PCECohort'
 
 # TAR settings
 sampleSize <- NULL
@@ -43,7 +43,7 @@ includeAllOutcomes <- T
 
 #=======================
 
-PooledCohortvalidation::execute(connectionDetails = connectionDetails,
+PCE::execute(connectionDetails = connectionDetails,
                                     cdmDatabaseSchema = cdmDatabaseSchema,
                                     cdmDatabaseName = cdmDatabaseName,
                                     cohortDatabaseSchema = cohortDatabaseSchema,

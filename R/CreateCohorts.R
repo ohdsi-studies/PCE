@@ -1,6 +1,6 @@
 # Copyright 2020 Observational Health Data Sciences and Informatics
 #
-# This file is part of PooledCohortvalidation
+# This file is part of PCE
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@
   
   # Create study cohort table structure:
   sql <- SqlRender::loadRenderTranslateSql(sqlFilename = "CreateCohortTable.sql",
-                                           packageName = "PooledCohortvalidation",
+                                           packageName = "PCE",
                                            dbms = attr(connection, "dbms"),
                                            oracleTempSchema = oracleTempSchema,
                                            cohort_database_schema = cohortDatabaseSchema,
@@ -34,12 +34,12 @@
   
   
   # Instantiate cohorts:
-  pathToCsv <- system.file("settings", "CohortsToCreate.csv", package = "PooledCohortvalidation")
+  pathToCsv <- system.file("settings", "CohortsToCreate.csv", package = "PCE")
   cohortsToCreate <- utils::read.csv(pathToCsv)
   for (i in 1:nrow(cohortsToCreate)) {
     writeLines(paste("Creating cohort:", cohortsToCreate$name[i]))
     sql <- SqlRender::loadRenderTranslateSql(sqlFilename = paste0(cohortsToCreate$name[i], ".sql"),
-                                             packageName = "PooledCohortvalidation",
+                                             packageName = "PCE",
                                              dbms = attr(connection, "dbms"),
                                              oracleTempSchema = oracleTempSchema,
                                              cdm_database_schema = cdmDatabaseSchema,
@@ -51,7 +51,7 @@
     DatabaseConnector::executeSql(connection, sql)
   }
   
-  pathToCustom <- system.file("settings", 'CustomCovariates.csv', package = "PooledCohortvalidation")
+  pathToCustom <- system.file("settings", 'CustomCovariates.csv', package = "PCE")
   if(file.exists(pathToCustom)){
     # if custom cohort covaraites set:
     cohortVarsToCreate <- utils::read.csv(pathToCustom)
@@ -64,7 +64,7 @@
     for (i in 1:nrow(cohortVarsToCreate)) {
       writeLines(paste("Creating cohort:", cohortVarsToCreate$cohortName[i]))
       sql <- SqlRender::loadRenderTranslateSql(sqlFilename = paste0(cohortVarsToCreate$cohortName[i], ".sql"),
-                                               packageName = "PooledCohortvalidation",
+                                               packageName = "PCE",
                                                dbms = attr(connection, "dbms"),
                                                oracleTempSchema = oracleTempSchema,
                                                cdm_database_schema = cdmDatabaseSchema,

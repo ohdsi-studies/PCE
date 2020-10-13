@@ -1,6 +1,6 @@
 # Copyright 2020 Observational Health Data Sciences and Informatics
 #
-# This file is part of PooledCohortvalidation
+# This file is part of PCE
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 #' Execute the Study
 #'
 #' @details
-#' This function executes the PooledCohortvalidation Study.
+#' This function executes the PCE Study.
 #' 
 #' @param connectionDetails    An object of type \code{connectionDetails} as created using the
 #'                             \code{\link[DatabaseConnector]{createConnectionDetails}} function in the
@@ -147,7 +147,7 @@ execute <- function(connectionDetails,
     
     for(i in 1:nrow(analysisSettings)){
       
-      pathToStandard <- system.file("settings", gsub('_model.csv','_standard_features.csv',analysisSettings$model[i]), package = "PooledCohortvalidation")
+      pathToStandard <- system.file("settings", gsub('_model.csv','_standard_features.csv',analysisSettings$model[i]), package = "PCE")
       if(file.exists(pathToStandard)){
         standTemp <- read.csv(pathToStandard)$x
         
@@ -158,7 +158,7 @@ execute <- function(connectionDetails,
           standSet[[j]] <- T
         }
         
-        pathToInclude <- system.file("settings", gsub('_model.csv','_standard_features_include.csv',analysisSettings$model[i]), package = "PooledCohortvalidation")
+        pathToInclude <- system.file("settings", gsub('_model.csv','_standard_features_include.csv',analysisSettings$model[i]), package = "PCE")
         incS <- read.csv(pathToInclude)$x
         standSet$includedCovariateIds <- incS
         

@@ -1,6 +1,6 @@
 # Copyright 2020 Observational Health Data Sciences and Informatics
 #
-# This file is part of PooledCohortvalidation
+# This file is part of PCE
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -59,7 +59,7 @@ createCohorts <- function(connectionDetails,
   # Check number of subjects per cohort:
   ParallelLogger::logInfo("Counting cohorts")
   sql <- SqlRender::loadRenderTranslateSql("GetCounts.sql",
-                                           "PooledCohortvalidation",
+                                           "PCE",
                                            dbms = connectionDetails$dbms,
                                            oracleTempSchema = oracleTempSchema,
                                            cdm_database_schema = cdmDatabaseSchema,
@@ -74,12 +74,12 @@ createCohorts <- function(connectionDetails,
 }
 
 addCohortNames <- function(data, IdColumnName = "cohortDefinitionId", nameColumnName = "cohortName") {
-  pathToCsv <- system.file("settings", "CohortsToCreate.csv", package = "PooledCohortvalidation")
+  pathToCsv <- system.file("settings", "CohortsToCreate.csv", package = "PCE")
   cohortsToCreate <- utils::read.csv(pathToCsv)
   
   # extra
   cohortsToCreate <- cohortsToCreate[,c('cohortId','name')]
-  pathToCsv <- system.file("settings", "CustomCovariates.csv", package = "PooledCohortvalidation")
+  pathToCsv <- system.file("settings", "CustomCovariates.csv", package = "PCE")
   cohortsToCreate2 <- utils::read.csv(pathToCsv)
   colnames(cohortsToCreate2) <- c('cohortId','name')
   cohortsToCreate <- rbind(cohortsToCreate, cohortsToCreate2)
