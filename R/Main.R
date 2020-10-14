@@ -309,6 +309,13 @@ execute <- function(connectionDetails,
     }
   }
   
+  
+  if (packageResults) {
+    ParallelLogger::logInfo("Packaging results")
+    packageResults(outputFolder = file.path(outputFolder,cdmDatabaseName),
+                   minCellCount = minCellCount)
+  }
+  
   # [TODO] add create shiny app
   viewer <- TRUE
   if(viewShiny) {
@@ -316,12 +323,7 @@ execute <- function(connectionDetails,
       PatientLevelPrediction::viewMultiplePlp(file.path(outputFolder,cdmDatabaseName))},
       error = function(e){'No results to view...'})
   }
-  
-  if (packageResults) {
-    ParallelLogger::logInfo("Packaging results")
-    packageResults(outputFolder = file.path(outputFolder,cdmDatabaseName),
-                   minCellCount = minCellCount)
-  }
+
    
   return(viewer)
 }
