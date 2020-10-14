@@ -287,6 +287,9 @@ execute <- function(connectionDetails,
               result$performanceEvaluation <- performance
               
               # TODO save the recalibration stuff somewhere?
+              extras <- rbind(c(analysisId,"validation","h.slope",h.slope),
+                              c(analysisId,"validation","f.slope",f.slope$coefficients['lp']))
+              result$performanceEvaluation$evaluationStatistics <- rbind(result$performanceEvaluation$evaluationStatistics,extras)
             }
             
             if(!dir.exists(file.path(outputFolder,cdmDatabaseName))){
