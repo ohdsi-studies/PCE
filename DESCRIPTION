@@ -20,7 +20,8 @@ Imports:
     magrittr,
     dplyr,
     officer,
-    Andromeda
+    Andromeda,
+    survival
 Suggests:
     knitr,
     rmarkdown,

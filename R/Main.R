@@ -248,44 +248,45 @@ execute <- function(connectionDetails,
             
             if(recalibrate){
               # add code here
-              misCal <- PatientLevelPrediction:::calibrationWeak(result$prediction)
+              
               predictionWeak <- result$prediction
-              predictionWeak$value[predictionWeak$value==0] <- 0.000000000000001
-              predictionWeak$value[predictionWeak$value==1] <- 1-0.000000000000001
-              predictionWeak$value <- log(predictionWeak$value/(1-predictionWeak$value))
-              predictionWeak$value <- 1/(1+exp(-1*(predictionWeak$value*misCal$gradient+misCal$intercept)))
+              
+              ### Extract data
+              t <- predictionWeak$survivalTime # observed follow up time
+              y <- ifelse(predictionWeak$outcomeCount>0,1,0)  # observed outcome
+              
+              # this has to be modified per model...
+              #1- 0.9533^exp(x-86.61) = p
+              #log(log(1-p)/log(0.9533))+86.61 = x
+              
+              if(analysisSettings$model[i] == "pooled_female_non_black_model.csv"){
+                lp <- log(log(1-predictionWeak$value)/log(0.9665))- 29.18
+              }else if(analysisSettings$model[i] == "pooled_male_non_black_model.csv"){
+                lp <- log(log(1-predictionWeak$value)/log(0.9144)) + 61.18
+              }else if(analysisSettings$model[i] == "pooled_female_black_model.csv"){
+                lp <- log(log(1-predictionWeak$value)/log(0.9533))+86.61
+              } else{
+                lp <- log(log(1-predictionWeak$value)/log(0.8954)) + 19.54
+              }
+              
+              S<- survival::Surv(t, y) 
+              #### Intercept + Slope recalibration
+              f.slope <- survival::coxph(S~lp)
+              h.slope <- max(survival::basehaz(f.slope)$hazard)  # maximum OK because of prediction_horizon
+              lp.slope <- stats::predict(f.slope)
+              p.slope.recal <- 1-exp(-h.slope*exp(lp.slope))
+              predictionWeak$value <- p.slope.recal
               
               result$prediction <- predictionWeak
               performance <- PatientLevelPrediction::evaluatePlp(result$prediction, plpData)
+              
               # reformatting the performance 
               analysisId <-   analysisSettings$analysisId[i]
-              
-              nr1 <- length(unlist(performance$evaluationStatistics[-1]))
-              performance$evaluationStatistics <- cbind(analysisId= rep(analysisId,nr1),
-                                                        Eval=rep('validation', nr1),
-                                                        Metric = names(unlist(performance$evaluationStatistics[-1])),
-                                                        Value = unlist(performance$evaluationStatistics[-1])
-              )
-              nr1 <- nrow(performance$thresholdSummary)
-              performance$thresholdSummary <- cbind(analysisId=rep(analysisId,nr1),
-                                                    Eval=rep('validation', nr1),
-                                                    performance$thresholdSummary)
-              nr1 <- nrow(performance$demographicSummary)
-              if(!is.null(performance$demographicSummary)){
-                performance$demographicSummary <- cbind(analysisId=rep(analysisId,nr1),
-                                                        Eval=rep('validation', nr1),
-                                                        performance$demographicSummary)
-              }
-              nr1 <- nrow(performance$calibrationSummary)
-              performance$calibrationSummary <- cbind(analysisId=rep(analysisId,nr1),
-                                                      Eval=rep('validation', nr1),
-                                                      performance$calibrationSummary)
-              nr1 <- nrow(performance$predictionDistribution)
-              performance$predictionDistribution <- cbind(analysisId=rep(analysisId,nr1),
-                                                          Eval=rep('validation', nr1),
-                                                          performance$predictionDistribution)
+              performance <- reformatePerformance(performance,analysisId)
               
               result$performanceEvaluation <- performance
+              
+              # TODO save the recalibration stuff somewhere?
             }
             
             if(!dir.exists(file.path(outputFolder,cdmDatabaseName))){
