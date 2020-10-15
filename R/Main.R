@@ -321,7 +321,8 @@ execute <- function(connectionDetails,
   if(viewShiny) {
     viewer <- tryCatch({
       PatientLevelPrediction::viewMultiplePlp(file.path(outputFolder,cdmDatabaseName))},
-      error = function(e){'No results to view...'})
+      error = function(e){ParallelLogger::logError(e);
+        ParallelLogger::logInfo("No results to view...")})
   }
 
    
