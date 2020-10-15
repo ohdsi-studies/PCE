@@ -1,18 +1,18 @@
 Pooled cohort equation model validation study
 =============
 
-<img src="https://img.shields.io/badge/Study%20Status-Repo%20Created-lightgray.svg" alt="Study Status: Repo Created">
+<img src="https://img.shields.io/badge/Study%20Status-Started-blue.svg" alt="Study Status: Started"> 
 
-- Analytics use case(s): **-**
-- Study type: **-**
-- Tags: **-**
+- Analytics use case(s): **Patient-Level Prediction**
+- Study type: **Clinical Application**
+- Tags: **OHDSI 2020 Study-a-thon**
 - Study lead: **-**
 - Study lead forums tag: **[[Lead tag]](https://forums.ohdsi.org/u/[Lead tag])**
-- Study start date: **-**
-- Study end date: **-**
-- Protocol: **-**
-- Publications: **-**
-- Results explorer: **-**
+- Study start date: **2020-10-01**
+- Study end date: **2020-11-01**
+- Protocol: **Coming Soon**
+- Publications: **Coming Soon**
+- Results explorer: **Coming Soon**
 
 This package will implement an existing model and validate it in OMOP CDM data
 
@@ -59,6 +59,7 @@ connectionDetails <- DatabaseConnector::createConnectionDetails(dbms = dbms,
 
 # Add the database containing the OMOP CDM data
 cdmDatabaseSchema <- 'cdm database schema'
+cdmDatabaseName <- 'A friendly name for the database name'
 # Add a database with read/write access as this is where the cohorts will be generated
 cohortDatabaseSchema <- 'work database schema'
 
