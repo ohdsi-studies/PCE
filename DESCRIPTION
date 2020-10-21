@@ -21,7 +21,8 @@ Imports:
     dplyr,
     officer,
     Andromeda,
-    survival
+    survival,
+    Hmisc
 Suggests:
     knitr,
     rmarkdown,
