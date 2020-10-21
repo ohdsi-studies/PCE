@@ -247,112 +247,15 @@ execute <- function(connectionDetails,
                                                 error = function(e){ParallelLogger::logError(e); return(NULL)})
             
             
-            # CUSTOM CODE FOR SURVIVAL RESULTS
-            #=======================================
-            # here we add the 2/3/5 year surivival risks to prediction
-            prediction <- result$prediction
-            if(analysisSettings$model[i] == "pooled_female_non_black_model.csv"){
-              lp <- log(log(1-prediction$value)/log(0.9665))- 29.18
-              result$prediction$value2year <- 1- 0.99619^exp(lp+29.18)
-              result$prediction$value3year <- 1- 0.99325^exp(lp+29.18)
-              result$prediction$value5year <- 1- 0.98898^exp(lp+29.18)
-              
-            }else if(analysisSettings$model[i] == "pooled_male_non_black_model.csv"){
-              lp <- log(log(1-prediction$value)/log(0.9144)) + 61.18
-              result$prediction$value2year <- 1- 0.98659^exp(lp-61.18)
-              result$prediction$value3year <- 1- 0.97954^exp(lp-61.18)
-              result$prediction$value5year <- 1- 0.96254^exp(lp-61.18)
-              
-            }else if(analysisSettings$model[i] == "pooled_female_black_model.csv"){
-              lp <- log(log(1-prediction$value)/log(0.9533))+86.61
-              result$prediction$value2year <- 1- 0.99357^exp(lp-86.61)
-              result$prediction$value3year <- 1- 0.98935^exp(lp-86.61)
-              result$prediction$value5year <- 1- 0.98194^exp(lp-86.61)
-            } else{
-              lp <- log(log(1-prediction$value)/log(0.8954)) + 19.54
-              result$prediction$value2year <- 1- 0.98682^exp(lp- 19.54)
-              result$prediction$value3year <- 1- 0.97846^exp(lp- 19.54)
-              result$prediction$value5year <- 1- 0.95726^exp(lp- 19.54)
-            }
-            
-            
-            # now to calculate the concordance
-            t <- result$prediction$survivalTime
-            y <- ifelse(result$prediction$outcomeCount > 0, 1, 0)
-            S<- survival::Surv(t, y) 
-            p <- result$prediction$value
-            ### censor times/events after prediction horizon (ie 2-year outcome)
-           
-            ### Observed survival function object (truncated at prediction_horizon)
-            conc <- survival::concordance(S~p, reverse=TRUE)
-            c.se<-sqrt(conc$var)
-            extras <- rbind(c(analysisId = analysisSettings$analysisId[i],
-                        "validation","c-Statistic",round(conc$concordance,5)),
-                        c(analysisId = analysisSettings$analysisId[i],
-                          "validation","c-Statistic_l95CI",round(conc$concordance+stats::qnorm(.025)*c.se,3)),
-                        c(analysisId = analysisSettings$analysisId[i],
-                          "validation","c-Statistic_u95CI",round(conc$concordance+stats::qnorm(.975)*c.se,3))
-            )
-            result$performanceEvaluation$evaluationStatistics <- rbind(result$performanceEvaluation$evaluationStatistics,extras)
-            
-            
-            # now to calculate the calibration T 2/3/5/10 year
-            for(yrs in c(2,3,5)){
-              t_temp <- t
-              y_temp <- y
-              t_temp[t_temp>365*yrs] <- 365*yrs
-              y_temp[t_temp>365*yrs] <- 0
-              S<- survival::Surv(t_temp, y_temp) 
-              p <- result$prediction[paste0('value',yrs,'year')]
-              
-              
-              ### E-stats
-              w<-rms::val.surv(est.surv=1-p,S=S,
-                               u=365*yrs, 
-                               fun=function(pr)log(-log(pr)))
-              e.mean<-mean(abs(w$actual - w$p))
-              e.90<-stats::quantile((abs(w$actual - w$p)),0.9)
-              
-              extras <- rbind(c(analysisId = analysisSettings$analysisId[i],
-                                "validation",paste0("E-statistic_",yrs),e.mean),
-                              c(analysisId = analysisSettings$analysisId[i],
-                                "validation",paste0("E90-statistic_",yrs),e.90)
-                              )
-              result$performanceEvaluation$evaluationStatistics <- rbind(result$performanceEvaluation$evaluationStatistics,extras)
-
-            }
-            
-            # add in calibration for survival 
-            S<- survival::Surv(t, y) 
-            groups<-Hmisc::cut2(result$prediction$value,g=100)
-            n.groups<-length(levels(groups))
-            pred<-tapply(result$prediction$value,groups,mean)
-            obs.q<-NULL
-            obs.lower.q<-NULL
-            obs.upper.q<-NULL
-            for (q in 1:n.groups){
-              KM<-survival::survfit(S ~ 1,sub=groups==levels(groups)[q])
-              obs.q<-c(obs.q,max(1-KM$surv))  # maximum OK because of prediction_horizon
-              obs.lower.q<-c(obs.lower.q,obs.lower<-max(1-KM$upper))
-              obs.upper.q<-c(obs.upper.q,obs.upper<-max(1-KM$lower))
-            }
-            result$performanceEvaluation$calibrationSummary$observedSurvival <- obs.q
-            result$performanceEvaluation$calibrationSummary$observedSurvivalLB <- obs.lower.q
-            result$performanceEvaluation$calibrationSummary$observedSurvivalUB <- obs.upper.q
-            
-            
-            #=======================================
-            
-            
             if(recalibrate){
               # add code here
+              
+              # recalibrate each time 2/3/5/10 years and add to prediction plus save values
               
               predictionWeak <- result$prediction
               
               ### Extract data
-              t <- predictionWeak$survivalTime # observed follow up time
-              y <- ifelse(predictionWeak$outcomeCount>0,1,0)  # observed outcome
-              
+  
               # this has to be modified per model...
               #1- 0.9533^exp(x-86.61) = p
               #log(log(1-p)/log(0.9533))+86.61 = x
@@ -367,69 +270,55 @@ execute <- function(connectionDetails,
                 lp <- log(log(1-predictionWeak$value)/log(0.8954)) + 19.54
               }
               
-              S<- survival::Surv(t, y) 
-              #### Intercept + Slope recalibration
-              f.slope <- survival::coxph(S~lp)
-              h.slope <- max(survival::basehaz(f.slope)$hazard)  # maximum OK because of prediction_horizon
-              lp.slope <- stats::predict(f.slope)
-              p.slope.recal <- 1-exp(-h.slope*exp(lp.slope))
-              predictionWeak$value <- p.slope.recal
+              t <- predictionWeak$survivalTime # observed follow up time
+              y <- ifelse(predictionWeak$outcomeCount>0,1,0)  # observed outcome
               
-              result$prediction <- predictionWeak
+              extras <- c()
+              for(yrs in c(2,3,5,10)){
+                t_temp <- t
+                y_temp <- y
+                t_temp[t_temp>365*yrs] <- 365*yrs
+                y_temp[t_temp>365*yrs] <- 0
+                S<- survival::Surv(t_temp, y_temp) 
+                #### Intercept + Slope recalibration
+                f.slope <- survival::coxph(S~lp)
+                h.slope <- max(survival::basehaz(f.slope)$hazard)  # maximum OK because of prediction_horizon
+                lp.slope <- stats::predict(f.slope)
+                p.slope.recal <- 1-exp(-h.slope*exp(lp.slope))
+                predictionWeak$value <- p.slope.recal
+                predictionWeak$new <- p.slope.recal
+                colnames(predictionWeak)[ncol(predictionWeak)] <- paste0('value',yrs,'year')
+                
+                # TODO save the recalibration stuff somewhere?
+                extras <- rbind(extras,
+                                c(analysisSettings$analysisId[i],"validation",paste0("h.slope_",yrs),h.slope),
+                                c(analysisSettings$analysisId[i],"validation",paste0("f.slope_",yrs),f.slope$coefficients['lp']))
+                
+              }
+              
+              
+              result$prediction <- predictionWeak # use 10 year prediction value
               performance <- PatientLevelPrediction::evaluatePlp(result$prediction, plpData)
               
               # reformatting the performance 
-              analysisId <-   analysisSettings$analysisId[i]
-              performance <- reformatePerformance(performance,analysisId)
+              performance <- reformatePerformance(performance,analysisSettings$analysisId[i])
               
               result$performanceEvaluation <- performance
               
-              # TODO save the recalibration stuff somewhere?
-              extras <- rbind(c(analysisId,"validation","h.slope",h.slope),
-                              c(analysisId,"validation","f.slope",f.slope$coefficients['lp']))
-              result$performanceEvaluation$evaluationStatistics <- rbind(result$performanceEvaluation$evaluationStatistics,extras)
+             result$performanceEvaluation$evaluationStatistics <- rbind(result$performanceEvaluation$evaluationStatistics,extras)
+
+            }
             
-              
-              # add in survival metrics
-              #--------
-              # now to calculate the concordance
-              t <- result$prediction$survivalTime
-              y <- ifelse(result$prediction$outcomeCount > 0, 1, 0)
-              S<- survival::Surv(t, y) 
-              p <- result$prediction$value
-              ### censor times/events after prediction horizon (ie 2-year outcome)
-              
-              ### Observed survival function object (truncated at prediction_horizon)
-              conc <- survival::concordance(S~p, reverse=TRUE)
-              c.se<-sqrt(conc$var)
-              extras <- rbind(c(analysisId = analysisSettings$analysisId[i],
-                                "validation","c-Statistic",round(conc$concordance,5)),
-                              c(analysisId = analysisSettings$analysisId[i],
-                                "validation","c-Statistic_l95CI",round(conc$concordance+stats::qnorm(.025)*c.se,3)),
-                              c(analysisId = analysisSettings$analysisId[i],
-                                "validation","c-Statistic_u95CI",round(conc$concordance+stats::qnorm(.975)*c.se,3))
-              )
-              result$performanceEvaluation$evaluationStatistics <- rbind(result$performanceEvaluation$evaluationStatistics,extras)
-              
-              # add in calibration for survival 
-              groups<-Hmisc::cut2(result$prediction$value,g=100)
-              n.groups<-length(levels(groups))
-              pred<-tapply(result$prediction$value,groups,mean)
-              obs.q<-NULL
-              obs.lower.q<-NULL
-              obs.upper.q<-NULL
-              for (q in 1:n.groups){
-                KM<-survival::survfit(S ~ 1,sub=groups==levels(groups)[q])
-                obs.q<-c(obs.q,max(1-KM$surv))  # maximum OK because of prediction_horizon
-                obs.lower.q<-c(obs.lower.q,obs.lower<-max(1-KM$upper))
-                obs.upper.q<-c(obs.upper.q,obs.upper<-max(1-KM$lower))
-              }
-              result$performanceEvaluation$calibrationSummary$observedSurvival <- obs.q
-              result$performanceEvaluation$calibrationSummary$observedSurvivalLB <- obs.lower.q
-              result$performanceEvaluation$calibrationSummary$observedSurvivalUB <- obs.upper.q
-              
-              
-              }
+            # CUSTOM CODE FOR SURVIVAL METRICS
+            #=======================================
+            # here we add the 2/3/5 year surivival metrics to prediction
+            result <- getSurvivialMetrics(plpResult = result, 
+                                          recalibrate = recalibrate, 
+                                          analysisId = analysisSettings$analysisId[i],
+                                          model = analysisSettings$model[i])
+            #=======================================
+            
+          
             
             if(!dir.exists(file.path(outputFolder,cdmDatabaseName))){
               dir.create(file.path(outputFolder,cdmDatabaseName))

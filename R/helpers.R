@@ -243,4 +243,104 @@ predictExisting <- function(model){
 
 
 
+getSurvivialMetrics <- function(plpResult, recalibrate, analysisId, model){
+  
+  prediction <- plpResult$prediction
+  
+  # if you havent recalibrated use the original values
+  if(!recalibrate){
+    if(model == "pooled_female_non_black_model.csv"){
+      lp <- log(log(1-prediction$value)/log(0.9665))- 29.18
+      plpResult$prediction$value2year <- 1- 0.99619^exp(lp+29.18)
+      plpResult$prediction$value3year <- 1- 0.99325^exp(lp+29.18)
+      plpResult$prediction$value5year <- 1- 0.98898^exp(lp+29.18)
+      plpResult$prediction$value10year <- plpResult$prediction$value
+      
+    }else if(model == "pooled_male_non_black_model.csv"){
+      lp <- log(log(1-prediction$value)/log(0.9144)) + 61.18
+      plpResult$prediction$value2year <- 1- 0.98659^exp(lp-61.18)
+      plpResult$prediction$value3year <- 1- 0.97954^exp(lp-61.18)
+      plpResult$prediction$value5year <- 1- 0.96254^exp(lp-61.18)
+      plpResult$prediction$value10year <- plpResult$prediction$value
+      
+    }else if(model == "pooled_female_black_model.csv"){
+      lp <- log(log(1-prediction$value)/log(0.9533))+86.61
+      plpResult$prediction$value2year <- 1- 0.99357^exp(lp-86.61)
+      plpResult$prediction$value3year <- 1- 0.98935^exp(lp-86.61)
+      plpResult$prediction$value5year <- 1- 0.98194^exp(lp-86.61)
+      plpResult$prediction$value10year <- plpResult$prediction$value
+    } else{
+      lp <- log(log(1-prediction$value)/log(0.8954)) + 19.54
+      plpResult$prediction$value2year <- 1- 0.98682^exp(lp- 19.54)
+      plpResult$prediction$value3year <- 1- 0.97846^exp(lp- 19.54)
+      plpResult$prediction$value5year <- 1- 0.95726^exp(lp- 19.54)
+      plpResult$prediction$value10year <- plpResult$prediction$value
+    }
+  }
+  
+  
+  t <- plpResult$prediction$survivalTime
+  y <- ifelse(plpResult$prediction$outcomeCount > 0, 1, 0)
+  
 
+  # now to calculate the metrics T 2/3/5/10 year
+  for(yrs in c(2,3,5,10)){
+    t_temp <- t
+    y_temp <- y
+    t_temp[t_temp>365*yrs] <- 365*yrs
+    y_temp[t_temp>365*yrs] <- 0
+    S<- survival::Surv(t_temp, y_temp) 
+    p <- plpResult$prediction[,paste0('value',yrs,'year')]
+    
+    
+    # concordance
+    ### Observed survival function object (truncated at prediction_horizon)
+    conc <- survival::concordance(S~p, reverse=TRUE)
+    c.se<-sqrt(conc$var)
+    extras <- rbind(c(analysisId = analysisId,
+                      "validation",paste0("c-Statistic_",yrs),round(conc$concordance,5)),
+                    c(analysisId = analysisId,
+                      "validation",paste0("c-Statistic_l95CI_",yrs),round(conc$concordance+stats::qnorm(.025)*c.se,3)),
+                    c(analysisId = analysisId,
+                      "validation",paste0("c-Statistic_u95CI_",yrs),round(conc$concordance+stats::qnorm(.975)*c.se,3))
+    )
+    plpResult$performanceEvaluation$evaluationStatistics <- rbind(plpResult$performanceEvaluation$evaluationStatistics,extras)
+  
+  
+    ### E-stats
+    w<-rms::val.surv(est.surv=1-p,S=S,
+                     u=365*yrs, 
+                     fun=function(pr)log(-log(pr)))
+    e.mean<-mean(abs(w$actual - w$p))
+    e.90<-stats::quantile((abs(w$actual - w$p)),0.9)
+    
+    extras <- rbind(c(analysisId = analysisId,
+                      "validation",paste0("E-statistic_",yrs),e.mean),
+                    c(analysisId = analysisId,
+                      "validation",paste0("E90-statistic_",yrs),e.90)
+    )
+    plpResult$performanceEvaluation$evaluationStatistics <- rbind(plpResult$performanceEvaluation$evaluationStatistics,extras)
+    
+  }
+  
+  # add in calibration for 10-year survival 
+  S<- survival::Surv(t, y) 
+  groups<-Hmisc::cut2(plpResult$prediction$value,g=100)
+  n.groups<-length(levels(groups))
+  pred<-tapply(plpResult$prediction$value,groups,mean)
+  obs.q<-NULL
+  obs.lower.q<-NULL
+  obs.upper.q<-NULL
+  for (q in 1:n.groups){
+    KM<-survival::survfit(S ~ 1,sub=groups==levels(groups)[q])
+    obs.q<-c(obs.q,max(1-KM$surv))  # maximum OK because of prediction_horizon
+    obs.lower.q<-c(obs.lower.q,obs.lower<-max(1-KM$upper))
+    obs.upper.q<-c(obs.upper.q,obs.upper<-max(1-KM$lower))
+  }
+  plpResult$performanceEvaluation$calibrationSummary$observedSurvival <- obs.q
+  plpResult$performanceEvaluation$calibrationSummary$observedSurvivalLB <- obs.lower.q
+  plpResult$performanceEvaluation$calibrationSummary$observedSurvivalUB <- obs.upper.q
+  
+  
+  return(plpResult)
+}
