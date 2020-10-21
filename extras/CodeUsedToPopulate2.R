@@ -14,9 +14,11 @@ populatePackageCohorts(targetCohortIds = c(1325,1322,1326,1328,
                                              'Black Female Persons who are statin-risk eligible not censored at statin initiation',
                                              'Non-Black Male Persons who are statin-risk eligible not censored at statin initiation',
                                              'Non-Black Female Persons who are statin-risk eligible not censored at statin initiation'),
-                       outcomeIds = c(1354,1357),
+                       outcomeIds = c(1354,1357,1365,1366),
                        outcomeNames = c('first of AMI or ischemic stroke or death',
-                                        'first of AMI or ischemic stroke or death, no IP required'
+                                        'first of AMI or ischemic stroke or death, no IP required',
+                                        'first occurrence of atheroclerotic cardiovascular disease',
+                                        'first occurrence of atheroclerotic cardiovascular disease no IP required'
                                         ),
                        baseUrl = baseUrl)
 

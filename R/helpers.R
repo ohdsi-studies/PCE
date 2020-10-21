@@ -288,11 +288,21 @@ getSurvivialMetrics <- function(plpResult, recalibrate, analysisId, model){
   for(yrs in c(2,3,5,10)){
     t_temp <- t
     y_temp <- y
-    t_temp[t_temp>365*yrs] <- 365*yrs
     y_temp[t_temp>365*yrs] <- 0
+    t_temp[t_temp>365*yrs] <- 365*yrs
     S<- survival::Surv(t_temp, y_temp) 
     p <- plpResult$prediction[,paste0('value',yrs,'year')]
     
+    # outcome count per time period
+    
+    out <- summary(survival::survfit(survival::Surv(t_temp, y_temp) ~ 1), times = 365*yrs)
+    
+    extras <- rbind(c(analysisId = analysisId,
+                      "validation",paste0("O_",yrs),sum(y_temp)),
+                    c(analysisId = analysisId,
+                      "validation",paste0("survival_",yrs),1-out$surv)
+                    )
+    plpResult$performanceEvaluation$evaluationStatistics <- rbind(plpResult$performanceEvaluation$evaluationStatistics,extras)
     
     # concordance
     ### Observed survival function object (truncated at prediction_horizon)

@@ -279,8 +279,8 @@ execute <- function(connectionDetails,
               for(yrs in c(2,3,5,10)){
                 t_temp <- t
                 y_temp <- y
-                t_temp[t_temp>365*yrs] <- 365*yrs
                 y_temp[t_temp>365*yrs] <- 0
+                t_temp[t_temp>365*yrs] <- 365*yrs
                 S<- survival::Surv(t_temp, y_temp) 
                 #### Intercept + Slope recalibration
                 f.slope <- survival::coxph(S~lp)
