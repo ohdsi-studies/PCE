@@ -90,12 +90,18 @@ PCE::execute(connectionDetails = connectionDetails,
                                 cdmDatabaseName = cdmDatabaseName,
                                 cohortDatabaseSchema = cohortDatabaseSchema,
                                 cohortTable = cohortTable,
-                                setting = data.frame(tId = rep(c(18941,18942,18943,18944),3), 
-                                                     oId = c(rep(18945,4),rep(18935,4),rep(18936,4)), 
-                                                     model = rep(c('pooled_male_non_black_model.csv',
-                                                                   'pooled_female_non_black_model.csv',
+                                setting = data.frame(tId = rep(c(1325,1322,1326,1328,
+                                                                 1358,1359,1360,1361),2), 
+                                                     oId = c(rep(1354,8),rep(1357,8)), 
+                                                     model = rep(c('pooled_male_black_model.csv',
                                                                    'pooled_female_black_model.csv',
-                                                                   'pooled_male_black_model.csv'),3)
+                                                                   'pooled_male_non_black_model.csv',
+                                                                   'pooled_female_non_black_model.csv',
+                                                                   'pooled_male_black_model.csv',
+                                                                   'pooled_female_black_model.csv',
+                                                                   'pooled_male_non_black_model.csv',
+                                                                   'pooled_female_non_black_model.csv'
+                                                                   ),2)
                                 ),
                                 sampleSize = sampleSize, 
                                 recalibrate = F,
@@ -124,12 +130,18 @@ PCE::execute(connectionDetails = connectionDetails,
              cdmDatabaseName = paste0(cdmDatabaseName,'_recalibration'),
              cohortDatabaseSchema = cohortDatabaseSchema,
              cohortTable = cohortTable,
-             setting = data.frame(tId = rep(c(18941,18942,18943,18944),3), 
-                                  oId = c(rep(18945,4),rep(18935,4),rep(18936,4)), 
-                                  model = rep(c('pooled_male_non_black_model.csv',
-                                                'pooled_female_non_black_model.csv',
+             setting = data.frame(tId = rep(c(1325,1322,1326,1328,
+                                              1358,1359,1360,1361),2), 
+                                  oId = c(rep(1354,8),rep(1357,8)), 
+                                  model = rep(c('pooled_male_black_model.csv',
                                                 'pooled_female_black_model.csv',
-                                                'pooled_male_black_model.csv'),3)
+                                                'pooled_male_non_black_model.csv',
+                                                'pooled_female_non_black_model.csv',
+                                                'pooled_male_black_model.csv',
+                                                'pooled_female_black_model.csv',
+                                                'pooled_male_non_black_model.csv',
+                                                'pooled_female_non_black_model.csv'
+                                  ),2)
              ),
              sampleSize = sampleSize, 
              recalibrate = T,
@@ -151,6 +163,9 @@ PCE::execute(connectionDetails = connectionDetails,
              minCellCount= 5,
              verbosity = "INFO",
              cdmVersion = 5)
+
+
+
 ```
 # Development status
 Under development.
