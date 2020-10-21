@@ -1,11 +1,11 @@
 "type","analysisId","covariateName","cohortId","atlasId","cohortName","startDay","endDay","count","ageInteraction","lnAgeInteraction","lnValue","aggregateMethod","imputationValue","covariateId","points"
-"cohortCovariate",456,"diabetes days before: -9999 days after: -1","17720","17720","diabetes",-9999,-1,0,FALSE,FALSE,FALSE,"na",0,17720456,0.658
-"cohortCovariate",456,"smoking days before: -730 days after: 60","18957","18957","smoking",-730,60,0,FALSE,FALSE,FALSE,"na",0,18957456,7.837
-"cohortCovariate",455,"smoking X ln(Age)  days before: -730 days after: 60","18957","18957","smoking",-730,60,0,FALSE,TRUE,FALSE,"na",0,18957455,-1.795
-"measurementCovariate",457,"Total_Cholesterol_mgdL","0","0","na",-365,60,0,FALSE,FALSE,TRUE,"recent",150,1457,11.853
-"measurementCovariate",457,"Total_Cholesterol_mgdL_age","0","0","na",-365,60,0,FALSE,TRUE,TRUE,"recent",150,2457,-2.664
-"measurementCovariate",457,"HDL-C_mgdL","0","0","na",-365,60,0,FALSE,FALSE,TRUE,"recent",50,3457,-7.99
-"measurementCovariate",457,"HDL-C_mgdL_age","0","0","na",-365,60,0,FALSE,TRUE,TRUE,"recent",50,4457,1.769
-"measurementCohortCovariate_in",459,"treated_Systolic_BP_mm_Hg","18946","18946","na",-365,60,0,FALSE,FALSE,TRUE,"recent",120,1459,1.797
-"measurementCohortCovariate_out",459,"untreated_Systolic_BP_mm_Hg","18946","18946","na",-365,60,0,FALSE,FALSE,TRUE,"recent",120,2459,1.764
-"ageCovariate",458,"log(age)","0","0","na",0,0,0,FALSE,FALSE,FALSE,"na",0,1458,12.344
+"cohortCovariate",456,"diabetes days before: -9999 days after: -1",1362,1362,"diabetes",-9999,-1,0,FALSE,FALSE,FALSE,"na",0,1362456,0.658
+"cohortCovariate",456,"smoking days before: -730 days after: 60",1286,1286,"smoking",-730,60,0,FALSE,FALSE,FALSE,"na",0,1286456,7.837
+"cohortCovariate",455,"smoking X ln(Age)  days before: -730 days after: 60",1286,1286,"smoking",-730,60,0,FALSE,TRUE,FALSE,"na",0,1286455,-1.795
+"measurementCovariate",457,"Total_Cholesterol_mgdL",0,0,"na",-1825,0,0,FALSE,FALSE,TRUE,"recent",150,1457,11.853
+"measurementCovariate",457,"Total_Cholesterol_mgdL_age",0,0,"na",-1825,0,0,FALSE,TRUE,TRUE,"recent",150,2457,-2.664
+"measurementCovariate",457,"HDL-C_mgdL",0,0,"na",-1825,0,0,FALSE,FALSE,TRUE,"recent",50,3457,-7.99
+"measurementCovariate",457,"HDL-C_mgdL_age",0,0,"na",-1825,0,0,FALSE,TRUE,TRUE,"recent",50,4457,1.769
+"measurementCohortCovariate_in",459,"treated_Systolic_BP_mm_Hg",1295,1295,"na",-365,0,0,FALSE,FALSE,TRUE,"recent",120,1459,1.797
+"measurementCohortCovariate_out",459,"untreated_Systolic_BP_mm_Hg",1295,1295,"na",-365,0,0,FALSE,FALSE,TRUE,"recent",120,2459,1.764
+"ageCovariate",458,"log(age)",0,0,"na",0,0,0,FALSE,FALSE,FALSE,"na",0,1458,12.344

@@ -32,7 +32,7 @@ populatePackageCohorts <- function(targetCohortIds,
   
   for (i in 1:nrow(cohortsToCreate)) {
     writeLines(paste("Inserting cohort:", cohortsToCreate$name[i]))
-    OhdsiRTools::insertCohortDefinitionInPackage(definitionId = cohortsToCreate$atlasId[i], 
+    ROhdsiWebApi::insertCohortDefinitionInPackage(cohortId = cohortsToCreate$atlasId[i], 
                                                  name = cohortsToCreate$name[i], 
                                                  baseUrl = baseUrl, 
                                                  generateStats = F)
@@ -148,7 +148,7 @@ populatePackageModels <- function(modelname = 'SimpleModel',
     
     for (i in 1:nrow(cohortsToCreate)) {
       writeLines(paste("Inserting cohort:", cohortsToCreate$cohortName[i]))
-      OhdsiRTools::insertCohortDefinitionInPackage(definitionId = cohortsToCreate$atlasId[i], # atlas or cohort? 
+      ROhdsiWebApi::insertCohortDefinitionInPackage(cohortId = cohortsToCreate$atlasId[i], # atlas or cohort? 
                                                    name = cohortsToCreate$cohortName[i], 
                                                    baseUrl = cohortCovariateSettings$baseUrl, 
                                                    generateStats = F)
@@ -305,7 +305,7 @@ populatePackageModels <- function(modelname = 'SimpleModel',
     
     for (i in 1:nrow(newCohortsToCreate)) {
       writeLines(paste("Inserting cohort:", newCohortsToCreate$cohortName[i]))
-      OhdsiRTools::insertCohortDefinitionInPackage(definitionId = newCohortsToCreate$atlasId[i], # atlas or cohort? 
+      ROhdsiWebApi::insertCohortDefinitionInPackage(cohortId = newCohortsToCreate$atlasId[i], # atlas or cohort? 
                                                    name = newCohortsToCreate$cohortName[i], 
                                                    baseUrl = measurementCohortCovariateSettings$baseUrl, 
                                                    generateStats = F)
