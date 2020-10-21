@@ -5,7 +5,9 @@ getAnalyses <- function(settings, outputFolder,cdmDatabaseName){
   
   if(is.null(settings)){
     cohortsSettings <- cohorts[cohorts$type == 'target', c('cohortId','name')]
-    cohortsSettings$outcomeId <- cohorts$cohortId[cohorts$type == 'outcome']
+    outcomeIds <- cohorts$cohortId[cohorts$type == 'outcome']
+    cohortsSettings <- do.call("rbind", rep(list(cohortsSettings), length(outcomeIds)))
+    cohortsSettings$outcomeId <- outcomeIds
     cohortsSettings$outcomeName <- cohorts$name[cohorts$type == 'outcome']
     colnames(cohortsSettings) <- c('targetId', 'targetName', 'outcomeId', 'outcomeName')
     
