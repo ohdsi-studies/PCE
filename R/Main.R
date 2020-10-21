@@ -270,7 +270,9 @@ execute <- function(connectionDetails,
                 lp <- log(log(1-predictionWeak$value)/log(0.8954)) + 19.54
               }
               
-              t <- predictionWeak$survivalTime # observed follow up time
+              #t <- predictionWeak$survivalTime # observed follow up time
+              t <- apply(cbind(predictionWeak$daysToCohortEnd, predictionWeak$survivalTime), 1, min)
+              
               y <- ifelse(predictionWeak$outcomeCount>0,1,0)  # observed outcome
               
               extras <- c()

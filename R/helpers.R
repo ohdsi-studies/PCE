@@ -279,7 +279,8 @@ getSurvivialMetrics <- function(plpResult, recalibrate, analysisId, model){
   }
   
   
-  t <- plpResult$prediction$survivalTime
+  #t <- plpResult$prediction$survivalTime
+  t <- apply(cbind(plpResult$prediction$daysToCohortEnd, plpResult$prediction$survivalTime), 1, min)
   y <- ifelse(plpResult$prediction$outcomeCount > 0, 1, 0)
   
 
