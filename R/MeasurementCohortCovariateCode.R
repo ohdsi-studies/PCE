@@ -59,7 +59,7 @@ getMeasurementCohortCovariateData <- function(connection,
   "AND @cohort_database_schema.@cohort_table.cohort_start_date <= dateadd(day, @endDay, c.cohort_start_date)",
   "AND @cohort_database_schema.@cohort_table.cohort_end_date >= dateadd(day, @startDay, c.cohort_start_date)",
   ")",
-  "AND m.measurement_concept_id in (@concepts)"
+  "AND m.measurement_concept_id in (@concepts) {@lnValue}?{ and value_as_number >0 }"
   )
   
   sql <- SqlRender::render(sql,
