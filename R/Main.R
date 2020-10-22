@@ -35,7 +35,9 @@
 #' @param oracleTempSchema     Should be used in Oracle to specify a schema where the user has write
 #'                             priviliges for storing temporary tables.
 #' @param setting              A data.frame with the tId, oId, model triplets to run - if NULL it runs all possible combinations                
-#' @param sampleSize           How many patients to sample from the target population                             
+#' @param sampleSize           How many patients to sample from the target population  
+#' @param recalibrate          Recalibrate the model intercept and slop
+#' @param recalibrateInterceptOnly  Recalibrate the intercept only.                           
 #' @param riskWindowStart      The start of the risk window (in days) relative to the startAnchor.                           
 #' @param startAnchor          The anchor point for the start of the risk window. Can be "cohort start" or "cohort end".
 #' @param riskWindowEnd        The end of the risk window (in days) relative to the endAnchor parameter
@@ -105,6 +107,7 @@ execute <- function(connectionDetails,
                     setting = NULL,
                     sampleSize = NULL,
                     recalibrate = F,
+                    recalibrateInterceptOnly = F,
                     riskWindowStart = 1,
                     startAnchor = 'cohort start',
                     riskWindowEnd = 365,
@@ -311,11 +314,73 @@ execute <- function(connectionDetails,
 
             }
             
+            
+            if(recalibrateInterceptOnly & !recalibrate){
+              # recalibrate each time 2/3/5/10 years and add to prediction plus save values
+              
+              predictionWeak <- result$prediction
+              
+              ### Extract data
+              
+              # this has to be modified per model...
+              #1- 0.9533^exp(x-86.61) = p
+              #log(log(1-p)/log(0.9533))+86.61 = x
+              
+              if(analysisSettings$model[i] == "pooled_female_non_black_model.csv"){
+                lp <- log(log(1-predictionWeak$value)/log(0.9665))- 29.18
+              }else if(analysisSettings$model[i] == "pooled_male_non_black_model.csv"){
+                lp <- log(log(1-predictionWeak$value)/log(0.9144)) + 61.18
+              }else if(analysisSettings$model[i] == "pooled_female_black_model.csv"){
+                lp <- log(log(1-predictionWeak$value)/log(0.9533))+86.61
+              } else{
+                lp <- log(log(1-predictionWeak$value)/log(0.8954)) + 19.54
+              }
+              
+              #t <- predictionWeak$survivalTime # observed follow up time
+              t <- apply(cbind(predictionWeak$daysToCohortEnd, predictionWeak$survivalTime), 1, min)
+              y <- ifelse(predictionWeak$outcomeCount>0,1,0)  # observed outcome
+              
+              extras <- c()
+              for(yrs in c(2,3,5,10)){
+                t_temp <- t
+                y_temp <- y
+                y_temp[t>365*yrs] <- 0
+                t_temp[t>365*yrs] <- 365*yrs
+                S<- survival::Surv(t_temp, y_temp) 
+                
+                f.intercept <- coxph(S~offset(lp))
+                h.intercept <- max(basehaz(f.intercept)$hazard)  # maximum OK because of prediction_horizon
+                p.intercept.recal <- 1-exp(-h.intercept*exp(lp-mean(lp)))
+                
+                predictionWeak$value <- p.intercept.recal
+                predictionWeak$new <- p.intercept.recal
+                colnames(predictionWeak)[ncol(predictionWeak)] <- paste0('value',yrs,'year')
+                
+                # TODO save the recalibration stuff somewhere?
+                extras <- rbind(extras,
+                                c(analysisSettings$analysisId[i],"validation",paste0("h.intercept_",yrs),h.intercept))
+                
+              }
+              
+              
+              result$prediction <- predictionWeak # use 10 year prediction value
+              performance <- PatientLevelPrediction::evaluatePlp(result$prediction, plpData)
+              
+              # reformatting the performance 
+              performance <- reformatePerformance(performance,analysisSettings$analysisId[i])
+              
+              result$performanceEvaluation <- performance
+              
+              result$performanceEvaluation$evaluationStatistics <- rbind(result$performanceEvaluation$evaluationStatistics,extras)
+              
+              
+            }
+            
             # CUSTOM CODE FOR SURVIVAL METRICS
             #=======================================
             # here we add the 2/3/5 year surivival metrics to prediction
             result <- getSurvivialMetrics(plpResult = result, 
-                                          recalibrate = recalibrate, 
+                                          recalibrate = recalibrate | recalibrateInterceptOnly, 
                                           analysisId = analysisSettings$analysisId[i],
                                           model = analysisSettings$model[i])
             #=======================================

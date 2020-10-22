@@ -285,6 +285,7 @@ getSurvivialMetrics <- function(plpResult, recalibrate, analysisId, model){
   
 
   # now to calculate the metrics T 2/3/5/10 year
+  nbSummary <- c()
   for(yrs in c(2,3,5,10)){
     t_temp <- t
     y_temp <- y
@@ -292,6 +293,15 @@ getSurvivialMetrics <- function(plpResult, recalibrate, analysisId, model){
     t_temp[t_temp>365*yrs] <- 365*yrs
     S<- survival::Surv(t_temp, y_temp) 
     p <- plpResult$prediction[,paste0('value',yrs,'year')]
+    
+    # netbenfit
+    preddat <- data.frame(p = p, t=t_temp, y=y_temp)
+    results = stdca(data=preddat, outcome="y", ttoutcome="t", timepoint=365*yrs, 
+                         predictors="p", xstart = 0.001, xstop = max(p), xby = 0.001, smooth=F)
+    
+    nbSummary <- rbind(nbSummary,
+                       data.frame(analysisId = analysisId, time = yrs, results$net.benefit))
+    
     
     # outcome count per time period
     
@@ -333,6 +343,8 @@ getSurvivialMetrics <- function(plpResult, recalibrate, analysisId, model){
     plpResult$performanceEvaluation$evaluationStatistics <- rbind(plpResult$performanceEvaluation$evaluationStatistics,extras)
     
   }
+  
+  plpResult$performanceEvaluation$nbSummary <- nbSummary
   
   # add in calibration for 10-year survival 
   S<- survival::Surv(t, y) 
