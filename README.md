@@ -12,7 +12,7 @@ Pooled cohort equation model validation study
 - Study end date: **2020-11-01**
 - Protocol: **Coming Soon**
 - Publications: **Coming Soon**
-- Results explorer: **Coming Soon**
+- Results explorer: **[View Results](https://data.ohdsi.org/PCEvalidation/)**
 
 The objective of this study is to perform a large-scale external validation of the widely implemented prognostic model the pooled cohort equation using OMOP CDM data
 
@@ -124,7 +124,48 @@ PCE::execute(connectionDetails = connectionDetails,
                                 verbosity = "INFO",
                                 cdmVersion = 5)
 
-# recalibrate
+PCE::execute(connectionDetails = connectionDetails,
+             cdmDatabaseSchema = cdmDatabaseSchema,
+             cdmDatabaseName = paste0(cdmDatabaseName,'_recalibrationIntercept'),
+             cohortDatabaseSchema = cohortDatabaseSchema,
+             cohortTable = cohortTable,
+             setting = data.frame(tId = rep(c(1325,1322,1326,1328,
+                                              1358,1359,1360,1361),4), 
+                                  oId = c(rep(1354,8),rep(1357,8),
+                                          rep(1365,8),rep(1366,8)),
+                                  model = rep(c('pooled_male_black_model.csv',
+                                                'pooled_female_black_model.csv',
+                                                'pooled_male_non_black_model.csv',
+                                                'pooled_female_non_black_model.csv',
+                                                'pooled_male_black_model.csv',
+                                                'pooled_female_black_model.csv',
+                                                'pooled_male_non_black_model.csv',
+                                                'pooled_female_non_black_model.csv'
+                                  ),4)
+             ),
+             sampleSize = sampleSize, 
+             recalibrateInterceptOnly =  T,
+             riskWindowStart = riskWindowStart,
+             startAnchor = startAnchor,
+             riskWindowEnd = riskWindowEnd,
+             endAnchor = endAnchor,
+             firstExposureOnly = firstExposureOnly,
+             removeSubjectsWithPriorOutcome = removeSubjectsWithPriorOutcome,
+             priorOutcomeLookback = priorOutcomeLookback,
+             requireTimeAtRisk = requireTimeAtRisk,
+             minTimeAtRisk = minTimeAtRisk,
+             includeAllOutcomes = includeAllOutcomes,
+             outputFolder = outputFolder,
+             createCohorts = F,
+             runAnalyses = T,
+             viewShiny = F,
+             packageResults = F, 
+             minCellCount= 5,
+             verbosity = "INFO",
+             cdmVersion = 5)
+
+
+# recalibrate intercept and slope
 PCE::execute(connectionDetails = connectionDetails,
              cdmDatabaseSchema = cdmDatabaseSchema,
              cdmDatabaseName = paste0(cdmDatabaseName,'_recalibration'),

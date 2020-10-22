@@ -51,6 +51,11 @@ packageResults <- function(outputFolder,
       plpResult$model$predict <- NULL
       cvst <- plpResult$inputSetting$dataExtrractionSettings$covariateSettings
       
+      #---- custom
+      # extract the nb 
+      nb <- plpResult$performanceEvaluation$nbSummary 
+      #------
+      
       if(minCellCount!=0){
         plpResult <- PatientLevelPrediction::transportPlp(plpResult,
                                                           dataName = cdmDatabaseName,
@@ -78,6 +83,14 @@ packageResults <- function(outputFolder,
       
       # save as csv
       PatientLevelPrediction::savePlpToCsv(plpResult, file.path(exportFolder,folder))
+      
+      
+      #---- custom
+      # save the nb (it has no patient level data)
+      if(!is.null(nb)){
+        write.csv(nb, file.path(exportFolder,folder, 'performanceEvaluation', 'nbSummary.csv'))
+      }
+      #------
       
     }
   }
