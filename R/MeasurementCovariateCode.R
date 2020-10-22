@@ -52,7 +52,7 @@ getMeasurementCovariateData <- function(connection,
    and measurement_date >= dateadd(day, @startDay, cohort_start_date) and 
    measurement_date <= dateadd(day, @endDay, cohort_start_date)",
   "inner join @cdm_database_schema.person p on p.person_id=c.subject_id",
-  "where m.measurement_concept_id in (@concepts)"
+  "where m.measurement_concept_id in (@concepts) {@lnValue}?{ and value_as_number >0 }"
   )
   
   sql <- SqlRender::render(sql,
