@@ -6,15 +6,15 @@ Pooled cohort equation model validation study
 - Analytics use case(s): **Patient-Level Prediction**
 - Study type: **Clinical Application**
 - Tags: **OHDSI 2020 Study-a-thon**
-- Study lead: **-**
-- Study lead forums tag: **[[Lead tag]](https://forums.ohdsi.org/u/[Lead tag])**
+- Study lead: **Jenna Reps, Peter Rijnbeek**
+- Study lead forums tag: **[jreps](https://forums.ohdsi.org/u/jreps), [Rijnbeek](https://forums.ohdsi.org/u/Rijnbeek)**
 - Study start date: **2020-10-01**
 - Study end date: **2020-11-01**
 - Protocol: **Coming Soon**
 - Publications: **Coming Soon**
 - Results explorer: **Coming Soon**
 
-This package will implement an existing model and validate it in OMOP CDM data
+The objective of this study is to perform a large-scale external validation of the widely implemented prognostic model the pooled cohort equation using OMOP CDM data
 
 Instructions To Install and Run Package From Github
 ===================
