@@ -348,8 +348,8 @@ execute <- function(connectionDetails,
                 t_temp[t>365*yrs] <- 365*yrs
                 S<- survival::Surv(t_temp, y_temp) 
                 
-                f.intercept <- coxph(S~offset(lp))
-                h.intercept <- max(basehaz(f.intercept)$hazard)  # maximum OK because of prediction_horizon
+                f.intercept <- survival::coxph(S~offset(lp))
+                h.intercept <- max(survival::basehaz(f.intercept)$hazard)  # maximum OK because of prediction_horizon
                 p.intercept.recal <- 1-exp(-h.intercept*exp(lp-mean(lp)))
                 
                 predictionWeak$value <- p.intercept.recal
