@@ -312,9 +312,11 @@ getSurvivialMetrics <- function(plpResult, recalibrate, analysisId, model){
     
     if(!is.null(out)){
       extras <- rbind(c(analysisId = analysisId,
-                        "validation",paste0("O_",yrs),sum(y_temp)),
+                        Eval = "validation",Metric = paste0("O_",yrs),
+                        Value = sum(y_temp)),
                       c(analysisId = analysisId,
-                        "validation",paste0("survival_",yrs),1-out$surv)
+                        Eval = "validation", Metric = paste0("survival_",yrs),
+                        Value = 1-out$surv)
       )
       plpResult$performanceEvaluation$evaluationStatistics <- rbind(plpResult$performanceEvaluation$evaluationStatistics,extras)
     }
@@ -326,11 +328,11 @@ getSurvivialMetrics <- function(plpResult, recalibrate, analysisId, model){
     if(!is.null(conc)){
       c.se<-sqrt(conc$var)
       extras <- rbind(c(analysisId = analysisId,
-                        "validation",paste0("c-Statistic_",yrs),round(conc$concordance,5)),
+                        Eval = "validation", Metric = paste0("c-Statistic_",yrs), Value = round(conc$concordance,5)),
                       c(analysisId = analysisId,
-                        "validation",paste0("c-Statistic_l95CI_",yrs),round(conc$concordance+stats::qnorm(.025)*c.se,3)),
+                        Eval = "validation",Metric = paste0("c-Statistic_l95CI_",yrs),Value =round(conc$concordance+stats::qnorm(.025)*c.se,3)),
                       c(analysisId = analysisId,
-                        "validation",paste0("c-Statistic_u95CI_",yrs),round(conc$concordance+stats::qnorm(.975)*c.se,3))
+                        Eval = "validation",Metric = paste0("c-Statistic_u95CI_",yrs),Value =round(conc$concordance+stats::qnorm(.975)*c.se,3))
       )
       plpResult$performanceEvaluation$evaluationStatistics <- rbind(plpResult$performanceEvaluation$evaluationStatistics,extras)
     }
@@ -345,9 +347,9 @@ getSurvivialMetrics <- function(plpResult, recalibrate, analysisId, model){
       e.90<-stats::quantile((abs(w$actual - w$p)),0.9)
       
       extras <- rbind(c(analysisId = analysisId,
-                        "validation",paste0("E-statistic_",yrs),e.mean),
+                        Eval = "validation",Metric = paste0("E-statistic_",yrs),Value =e.mean),
                       c(analysisId = analysisId,
-                        "validation",paste0("E90-statistic_",yrs),e.90)
+                        Eval = "validation",Metric = paste0("E90-statistic_",yrs),Value =e.90)
       )
       plpResult$performanceEvaluation$evaluationStatistics <- rbind(plpResult$performanceEvaluation$evaluationStatistics,extras)
     }
