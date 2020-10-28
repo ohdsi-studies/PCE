@@ -296,52 +296,61 @@ getSurvivialMetrics <- function(plpResult, recalibrate, analysisId, model){
     
     # netbenfit
     preddat <- data.frame(p = p, t=t_temp, y=y_temp)
-    results = stdca(data=preddat, outcome="y", ttoutcome="t", timepoint=365*yrs, 
-                         predictors="p", xstart = 0.001, xstop = max(p), xby = 0.001, smooth=F)
-    
-    nbSummary <- rbind(nbSummary,
-                       data.frame(analysisId = analysisId, time = yrs, results$net.benefit))
+    results = tryCatch({stdca(data=preddat, outcome="y", ttoutcome="t", timepoint=365*yrs, 
+                              predictors="p", xstart = 0.001, xstop = max(p), xby = 0.001, smooth=F)},
+                       error = function(e){ParallelLogger::logError(e); return(NULL)})
+    if(!is.null(results)){
+      nbSummary <- rbind(nbSummary,
+                         data.frame(analysisId = analysisId, time = yrs, results$net.benefit))
+    }
     
     
     # outcome count per time period
     
-    out <- summary(survival::survfit(survival::Surv(t_temp, y_temp) ~ 1), times = 365*yrs)
+    out <- tryCatch({summary(survival::survfit(survival::Surv(t_temp, y_temp) ~ 1), times = 365*yrs)},
+                    error = function(e){ParallelLogger::logError(e); return(NULL)})
     
-    extras <- rbind(c(analysisId = analysisId,
-                      "validation",paste0("O_",yrs),sum(y_temp)),
-                    c(analysisId = analysisId,
-                      "validation",paste0("survival_",yrs),1-out$surv)
-                    )
-    plpResult$performanceEvaluation$evaluationStatistics <- rbind(plpResult$performanceEvaluation$evaluationStatistics,extras)
+    if(!is.null(out)){
+      extras <- rbind(c(analysisId = analysisId,
+                        "validation",paste0("O_",yrs),sum(y_temp)),
+                      c(analysisId = analysisId,
+                        "validation",paste0("survival_",yrs),1-out$surv)
+      )
+      plpResult$performanceEvaluation$evaluationStatistics <- rbind(plpResult$performanceEvaluation$evaluationStatistics,extras)
+    }
     
     # concordance
     ### Observed survival function object (truncated at prediction_horizon)
-    conc <- survival::concordance(S~p, reverse=TRUE)
-    c.se<-sqrt(conc$var)
-    extras <- rbind(c(analysisId = analysisId,
-                      "validation",paste0("c-Statistic_",yrs),round(conc$concordance,5)),
-                    c(analysisId = analysisId,
-                      "validation",paste0("c-Statistic_l95CI_",yrs),round(conc$concordance+stats::qnorm(.025)*c.se,3)),
-                    c(analysisId = analysisId,
-                      "validation",paste0("c-Statistic_u95CI_",yrs),round(conc$concordance+stats::qnorm(.975)*c.se,3))
-    )
-    plpResult$performanceEvaluation$evaluationStatistics <- rbind(plpResult$performanceEvaluation$evaluationStatistics,extras)
-  
+    conc <- tryCatch({survival::concordance(S~p, reverse=TRUE)},
+                     error = function(e){ParallelLogger::logError(e); return(NULL)})
+    if(!is.null(conc)){
+      c.se<-sqrt(conc$var)
+      extras <- rbind(c(analysisId = analysisId,
+                        "validation",paste0("c-Statistic_",yrs),round(conc$concordance,5)),
+                      c(analysisId = analysisId,
+                        "validation",paste0("c-Statistic_l95CI_",yrs),round(conc$concordance+stats::qnorm(.025)*c.se,3)),
+                      c(analysisId = analysisId,
+                        "validation",paste0("c-Statistic_u95CI_",yrs),round(conc$concordance+stats::qnorm(.975)*c.se,3))
+      )
+      plpResult$performanceEvaluation$evaluationStatistics <- rbind(plpResult$performanceEvaluation$evaluationStatistics,extras)
+    }
   
     ### E-stats
-    w<-rms::val.surv(est.surv=1-p,S=S,
+    w<- tryCatch({rms::val.surv(est.surv=1-p,S=S,
                      u=365*yrs, 
-                     fun=function(pr)log(-log(pr)))
-    e.mean<-mean(abs(w$actual - w$p))
-    e.90<-stats::quantile((abs(w$actual - w$p)),0.9)
-    
-    extras <- rbind(c(analysisId = analysisId,
-                      "validation",paste0("E-statistic_",yrs),e.mean),
-                    c(analysisId = analysisId,
-                      "validation",paste0("E90-statistic_",yrs),e.90)
-    )
-    plpResult$performanceEvaluation$evaluationStatistics <- rbind(plpResult$performanceEvaluation$evaluationStatistics,extras)
-    
+                     fun=function(pr)log(-log(pr)))},
+                 error = function(e){ParallelLogger::logError(e); return(NULL)})
+    if(!is.null(w)){
+      e.mean<-mean(abs(w$actual - w$p))
+      e.90<-stats::quantile((abs(w$actual - w$p)),0.9)
+      
+      extras <- rbind(c(analysisId = analysisId,
+                        "validation",paste0("E-statistic_",yrs),e.mean),
+                      c(analysisId = analysisId,
+                        "validation",paste0("E90-statistic_",yrs),e.90)
+      )
+      plpResult$performanceEvaluation$evaluationStatistics <- rbind(plpResult$performanceEvaluation$evaluationStatistics,extras)
+    }
   }
   
   plpResult$performanceEvaluation$nbSummary <- nbSummary

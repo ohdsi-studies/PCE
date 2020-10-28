@@ -54,6 +54,7 @@
 #'                             performance.
 #' @param createCohorts        Create the cohortTable table with the target population and outcome cohorts?
 #' @param runAnalyses          Run the model development
+#' @param aggregateCohorts     Run this after runAnalyses to calculate the performance for combination of males and females, black and non-black
 #' @param viewShiny            View the results as a shiny app
 #' @param packageResults       Should results be packaged for later sharing?     
 #' @param minCellCount         The minimum number of subjects contributing to a count before it can be included 
@@ -90,6 +91,7 @@
 #'         outputFolder = "c:/temp/study_results", 
 #'         createCohorts = T,
 #'         runAnalyses = T,
+#'         aggregateCohorts = T,
 #'         viewShiny = F,
 #'         packageResults = F,
 #'         minCellCount = 10,
@@ -121,6 +123,7 @@ execute <- function(connectionDetails,
                     outputFolder,
                     createCohorts = F,
                     runAnalyses = F,
+                    aggregateCohorts = T,
                     viewShiny = F,
                     packageResults = F,
 					          minCellCount = 10,
@@ -206,6 +209,14 @@ execute <- function(connectionDetails,
                                                                               includeAllOutcomes = includeAllOutcomes)},
                                error = function(e){ParallelLogger::logError(e); return(NULL)})
         
+        
+        # if less than 20 outcomes dont run
+        if(sum(population$outcomeCount >0)<20){
+          ParallelLogger::logInfo('Less that 20 outcomes so not running...')
+        }
+        
+        if(sum(population$outcomeCount >0)>=20){
+          
         
         if(!is.null(population)){
           # apply the model:
@@ -379,10 +390,11 @@ execute <- function(connectionDetails,
             # CUSTOM CODE FOR SURVIVAL METRICS
             #=======================================
             # here we add the 2/3/5 year surivival metrics to prediction
-            result <- getSurvivialMetrics(plpResult = result, 
+            result <- tryCatch({getSurvivialMetrics(plpResult = result, 
                                           recalibrate = recalibrate | recalibrateInterceptOnly, 
                                           analysisId = analysisSettings$analysisId[i],
-                                          model = analysisSettings$model[i])
+                                          model = analysisSettings$model[i])},
+                               error = function(e){ParallelLogger::logError(e); return(NULL)})
             #=======================================
             
           
@@ -402,6 +414,13 @@ execute <- function(connectionDetails,
       } # plpData not null
       
     }
+    }
+  }
+  
+  if(aggregateCohorts == T){
+    agg <- tryCatch({getAggregatePerm(outputFolder,cdmDatabaseName)},
+                    error = function(e){ParallelLogger::logError(e);
+                      ParallelLogger::logInfo("Aggregate cohorts failed...")})
   }
   
   

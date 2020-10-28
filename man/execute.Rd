@@ -13,6 +13,8 @@ execute(
   oracleTempSchema = cohortDatabaseSchema,
   setting = NULL,
   sampleSize = NULL,
+  recalibrate = F,
+  recalibrateInterceptOnly = F,
   riskWindowStart = 1,
   startAnchor = "cohort start",
   riskWindowEnd = 365,
@@ -26,6 +28,7 @@ execute(
   outputFolder,
   createCohorts = F,
   runAnalyses = F,
+  aggregateCohorts = T,
   viewShiny = F,
   packageResults = F,
   minCellCount = 10,
@@ -59,6 +62,10 @@ priviliges for storing temporary tables.}
 
 \item{sampleSize}{How many patients to sample from the target population}
 
+\item{recalibrate}{Recalibrate the model intercept and slop}
+
+\item{recalibrateInterceptOnly}{Recalibrate the intercept only.}
+
 \item{riskWindowStart}{The start of the risk window (in days) relative to the startAnchor.}
 
 \item{startAnchor}{The anchor point for the start of the risk window. Can be "cohort start" or "cohort end".}
@@ -87,6 +94,8 @@ performance.}
 
 \item{runAnalyses}{Run the model development}
 
+\item{aggregateCohorts}{Run this after runAnalyses to calculate the performance for combination of males and females, black and non-black}
+
 \item{viewShiny}{View the results as a shiny app}
 
 \item{packageResults}{Should results be packaged for later sharing?}
@@ -112,7 +121,7 @@ in packaged results.}
 Execute the Study
 }
 \details{
-This function executes the SkeletonExistingPredictionModelStudy Study.
+This function executes the PCE Study.
 }
 \examples{
 \dontrun{
@@ -135,6 +144,7 @@ execute(connectionDetails,
         outputFolder = "c:/temp/study_results", 
         createCohorts = T,
         runAnalyses = T,
+        aggregateCohorts = T,
         viewShiny = F,
         packageResults = F,
         minCellCount = 10,
