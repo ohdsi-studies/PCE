@@ -20,17 +20,37 @@ getAggregatePerm <- function(outputFolder,cdmDatabaseName){
     
     tIds <- c(1322, 1325, 1326, 1328)
     prediction <- c()
+    table1 <- NULL
     templateResult <- NULL
     resultsToLoad <- settings$analysisId[settings$targetId%in%tIds & settings$outcomeId==oids[i]]
     for(aId in resultsToLoad){
       resLoc <- file.path(outputFolder,cdmDatabaseName, aId, 'plpResult')
       if(dir.exists(resLoc)){
+        
         templateResult <- PatientLevelPrediction::loadPlpResult(resLoc)
         predTemp <- templateResult$prediction
         
         if(!is.null(predTemp)){
           prediction <- rbind(prediction, predTemp)
         }
+        
+        #table 1
+        if(file.exists(file.path(outputFolder,cdmDatabaseName, aId, 'plpResult','table1.rds'))){
+          tab1 <- readRDS(file.path(outputFolder,cdmDatabaseName, aId, 'plpResult','table1.rds'))
+          
+          if(!is.null(table1)){
+            tab1 <- tab1 %>% dplyr::mutate(mean2 = mean, N2 = N, stdev2 = stdev) %>% dplyr::select(covariateName,mean2,N2,stdev2)
+          table1 <- dplyr::full_join(table1, tab1, by = 'covariateName')
+          table1[is.na(table1)] <- 0
+          table1 <- table1 %>% dplyr::transmute(covariateName = covariateName,
+                             mean = (mean*N +mean2*N2)/(N+N2),
+                             stdev = sqrt(((N-1)*stdev^2 +(N2-1)*stdev2^2)/(N+N2-1) + N*N2*(mean-mean2)^2/((N+N2)*(N+N2-1))),
+                             N = N+N2)
+          } else{
+            table1 <- tab1
+          }
+        }
+        
       }
     }
     
@@ -44,19 +64,19 @@ getAggregatePerm <- function(outputFolder,cdmDatabaseName){
       }
       
       # update analysisIds
-      result$performanceEvaluation$calibrationSummary$analysisId <- paste0('Analysis_',50+1*i)
-      result$performanceEvaluation$demographicSummary$analysisId <- paste0('Analysis_',50+1*i)
+      result$performanceEvaluation$calibrationSummary$analysisId <- paste0('Analysis_',50+(2*i)-1)
+      result$performanceEvaluation$demographicSummary$analysisId <- paste0('Analysis_',50+(2*i)-1)
       result$performanceEvaluation$evaluationStatistics <- as.data.frame(result$performanceEvaluation$evaluationStatistics)
-      result$performanceEvaluation$evaluationStatistics$analysisId <- paste0('Analysis_',50+1*i)
+      result$performanceEvaluation$evaluationStatistics$analysisId <- paste0('Analysis_',50+(2*i)-1)
       result$performanceEvaluation$evaluationStatistics$Value <- as.character(result$performanceEvaluation$evaluationStatistics$Value)
       result$performanceEvaluation$evaluationStatistics$Value[result$performanceEvaluation$evaluationStatistics$Metric == 'populationSize'] <- nrow(prediction)
       result$performanceEvaluation$evaluationStatistics <- result$performanceEvaluation$evaluationStatistics[-grep('_',result$performanceEvaluation$evaluationStatistics$Metric),]
-      result$performanceEvaluation$predictionDistribution$analysisId <- paste0('Analysis_',50+1*i)
-      result$performanceEvaluation$thresholdSummary$analysisId <- paste0('Analysis_',50+1*i)
+      result$performanceEvaluation$predictionDistribution$analysisId <- paste0('Analysis_',50+(2*i)-1)
+      result$performanceEvaluation$thresholdSummary$analysisId <- paste0('Analysis_',50+(2*i)-1)
       
       result <- getSurvivialMetrics(plpResult = result, 
                                     recalibrate = F, 
-                                    analysisId = paste0('Analysis_',50+1*i),
+                                    analysisId = paste0('Analysis_',50+(2*i)-1),
                                     model = 'combined')
       #=======================================
       
@@ -66,8 +86,9 @@ getAggregatePerm <- function(outputFolder,cdmDatabaseName){
         dir.create(file.path(outputFolder,cdmDatabaseName))
       }
       ParallelLogger::logInfo("Saving results")
-      PatientLevelPrediction::savePlpResult(result, file.path(outputFolder,cdmDatabaseName,paste0('Analysis_',50+1*i), 'plpResult'))
-      ParallelLogger::logInfo(paste0("Results saved to:",file.path(outputFolder,cdmDatabaseName,paste0('Analysis_',50+1*i))))
+      PatientLevelPrediction::savePlpResult(result, file.path(outputFolder,cdmDatabaseName,paste0('Analysis_',50+(2*i)-1), 'plpResult'))
+      saveRDS(table1, file.path(outputFolder,cdmDatabaseName,paste0('Analysis_',50+(2*i)-1), 'plpResult','table1.rds'))
+      ParallelLogger::logInfo(paste0("Results saved to:",file.path(outputFolder,cdmDatabaseName,paste0('Analysis_',50+(2*i)-1))))
       
     }
     
@@ -79,7 +100,7 @@ getAggregatePerm <- function(outputFolder,cdmDatabaseName){
       outcomeName = unique(settings$outcomeName[settings$outcomeId==oids[i]]),
       model = 'combined',
       modelSettingsId = 1, 
-      analysisId = paste0('Analysis_',50+1*i),
+      analysisId = paste0('Analysis_',50+(2*i)-1),
       cohortName = "Persons who are statin-risk eligible",
       devDatabase = NA,
       valDatabase = unique(settings$valDatabase),
@@ -95,6 +116,7 @@ getAggregatePerm <- function(outputFolder,cdmDatabaseName){
     #=======
     tIds2 <- c(1358, 1359, 1360, 1361)
     prediction <- c()
+    table1 <- NULL
     templateResult <- NULL
     resultsToLoad <- settings$analysisId[settings$targetId%in%tIds2 & settings$outcomeId==oids[i]]
     for(aId in resultsToLoad){
@@ -106,6 +128,25 @@ getAggregatePerm <- function(outputFolder,cdmDatabaseName){
         if(!is.null(predTemp)){
           prediction <- rbind(prediction, predTemp)
         }
+        
+        #table 1
+        if(file.exists(file.path(outputFolder,cdmDatabaseName, aId, 'plpResult','table1.rds'))){
+          tab1 <- readRDS(file.path(outputFolder,cdmDatabaseName, aId, 'plpResult','table1.rds'))
+          
+          if(!is.null(table1)){
+            tab1 <- tab1 %>% dplyr::mutate(mean2 = mean, N2 = N, stdev2 = stdev) %>% dplyr::select(covariateName,mean2,N2,stdev2)
+            table1 <- dplyr::full_join(table1, tab1, by = 'covariateName')
+            table1[is.na(table1)] <- 0
+            table1 <- table1 %>% dplyr::transmute(covariateName = covariateName,
+                                                  mean = (mean*N +mean2*N2)/(N+N2),
+                                                  stdev = sqrt(((N-1)*stdev^2 +(N2-1)*stdev2^2)/(N+N2-1) + N*N2*(mean-mean2)^2/((N+N2)*(N+N2-1))),
+                                                  N = N+N2)
+          } else{
+            table1 <- tab1
+          }
+        }
+        
+        
       }
     }
     
@@ -143,6 +184,7 @@ getAggregatePerm <- function(outputFolder,cdmDatabaseName){
       }
       ParallelLogger::logInfo("Saving results")
       PatientLevelPrediction::savePlpResult(result, file.path(outputFolder,cdmDatabaseName,paste0('Analysis_',50+2*i), 'plpResult'))
+      saveRDS(table1, file.path(outputFolder,cdmDatabaseName,paste0('Analysis_',50+2*i), 'plpResult','table1.rds'))
       ParallelLogger::logInfo(paste0("Results saved to:",file.path(outputFolder,cdmDatabaseName,paste0('Analysis_',50+2*i))))
       
     }

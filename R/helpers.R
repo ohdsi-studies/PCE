@@ -378,3 +378,31 @@ getSurvivialMetrics <- function(plpResult, recalibrate, analysisId, model){
   
   return(plpResult)
 }
+
+
+
+
+getTable1 <- function(plpData){
+  md <- attr(plpData$covariateData, 'metaData')
+  meas <- as.data.frame(matrix(unlist(md$table1), ncol=4, byrow = T))
+  colnames(meas) <- c('covariateId', 'mean', 'stdev', 'N')
+  cr <- plpData$covariateData$covariateRef %>% collect()
+  meas <- merge(meas, cr[,c('covariateId','covariateName')], by='covariateId')
+  meas <- meas[,c('covariateName', 'mean', 'stdev', 'N')]
+  
+  age <- plpData$cohorts %>% dplyr::summarise(covariateName = 'Age in years',
+                                              mean = mean(ageYear),
+                                              stdev = sd(ageYear),
+                                              N = length(ageYear))
+  
+  male <- plpData$cohorts %>% dplyr::filter(gender == 8507)
+  male <- data.frame(covariateName = 'Male (%)',
+             mean = nrow(male)/nrow(plpData$cohorts)*100,
+             stdev = 0,
+             N = nrow(plpData$cohorts))#nrow(male))
+  
+  table1 <- rbind(meas,age,male)
+  colnames(table1) <- c('covariateName', 'mean', 'stdev', 'N')
+
+  return(table1)
+}

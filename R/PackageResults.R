@@ -48,6 +48,14 @@ packageResults <- function(outputFolder,
     if(dir.exists(file.path(outputFolder,folder, 'plpResult'))){
       plpResult <- PatientLevelPrediction::loadPlpResult(file.path(outputFolder,folder, 'plpResult'))
       
+      #---- custom
+      # loads table1:
+      table1 <- NULL
+      if(file.exists(file.path(outputFolder,folder, 'plpResult','table1.rds'))){
+        table1 <- readRDS(file.path(outputFolder,folder, 'plpResult','table1.rds'))
+      }
+      #------
+      
       plpResult$model$predict <- NULL
       cvst <- plpResult$inputSetting$dataExtrractionSettings$covariateSettings
       
@@ -89,6 +97,9 @@ packageResults <- function(outputFolder,
       # save the nb (it has no patient level data)
       if(!is.null(nb)){
         write.csv(nb, file.path(exportFolder,folder, 'performanceEvaluation', 'nbSummary.csv'))
+      }
+      if(!is.null(table1)){
+        write.csv(table1, file.path(exportFolder,folder, 'performanceEvaluation', 'table1.csv'))
       }
       #------
       

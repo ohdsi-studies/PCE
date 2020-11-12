@@ -53,6 +53,7 @@
 #'                             (/). Do not use a folder on a network drive since this greatly impacts
 #'                             performance.
 #' @param createCohorts        Create the cohortTable table with the target population and outcome cohorts?
+#' @param createTable1         Create the Table 1 - a characteristic of the target populations
 #' @param runAnalyses          Run the model development
 #' @param aggregateCohorts     Run this after runAnalyses to calculate the performance for combination of males and females, black and non-black
 #' @param viewShiny            View the results as a shiny app
@@ -122,6 +123,7 @@ execute <- function(connectionDetails,
                     includeAllOutcomes = T,
                     outputFolder,
                     createCohorts = F,
+                    createTable1 = F,
                     runAnalyses = F,
                     aggregateCohorts = T,
                     viewShiny = F,
@@ -193,6 +195,10 @@ execute <- function(connectionDetails,
       
       if(!is.null(plpData)){
         
+        
+        # get table 1
+        table1 <- tryCatch({getTable1(plpData)}, error = function(e){ParallelLogger::logError(e); return(NULL)})
+        
         #create pop
         ParallelLogger::logInfo("Creating population")
         population <- tryCatch({PatientLevelPrediction::createStudyPopulation(plpData = plpData, 
@@ -211,11 +217,11 @@ execute <- function(connectionDetails,
         
         
         # if less than 20 outcomes dont run
-        if(sum(population$outcomeCount >0)<20){
-          ParallelLogger::logInfo('Less that 20 outcomes so not running...')
+        if(sum(population$outcomeCount >0)<10){
+          ParallelLogger::logInfo('Less that 10 outcomes so not running...')
         }
         
-        if(sum(population$outcomeCount >0)>=20){
+        if(sum(population$outcomeCount >0)>=10){
           
         
         if(!is.null(population)){
@@ -404,6 +410,7 @@ execute <- function(connectionDetails,
             }
             ParallelLogger::logInfo("Saving results")
             PatientLevelPrediction::savePlpResult(result, file.path(outputFolder,cdmDatabaseName,analysisSettings$analysisId[i], 'plpResult'))
+            saveRDS(table1, file.path(outputFolder,cdmDatabaseName,analysisSettings$analysisId[i], 'plpResult','table1.rds'))
             ParallelLogger::logInfo(paste0("Results saved to:",file.path(outputFolder,cdmDatabaseName,analysisSettings$analysisId[i])))
            
             
