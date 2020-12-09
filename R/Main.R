@@ -69,7 +69,8 @@
 #'                                         \item{ERROR}{Show error messages}
 #'                                         \item{FATAL}{Be silent except for fatal errors}
 #'                                         }                              
-#' @param cdmVersion           The version of the common data model                             
+#' @param cdmVersion           The version of the common data model  
+#' @param overwrite            T overwrite the results, F only runs analyses that are currently empty                            
 #'
 #' @examples
 #' \dontrun{
@@ -130,7 +131,8 @@ execute <- function(connectionDetails,
                     packageResults = F,
 					          minCellCount = 10,
                     verbosity = "INFO",
-                    cdmVersion = 5) {
+                    cdmVersion = 5,
+					          overwrite = T) {
   if (!file.exists(file.path(outputFolder,cdmDatabaseName)))
     dir.create(file.path(outputFolder,cdmDatabaseName), recursive = TRUE)
   
@@ -155,272 +157,286 @@ execute <- function(connectionDetails,
     
     for(i in 1:nrow(analysisSettings)){
       
-      pathToStandard <- system.file("settings", gsub('_model.csv','_standard_features.csv',analysisSettings$model[i]), package = "PCE")
-      if(file.exists(pathToStandard)){
-        standTemp <- read.csv(pathToStandard)$x
-        
-        standSet <- list()
-        length(standSet) <- length(standTemp)
-        names(standSet) <- standTemp
-        for(j in 1:length(standSet)){
-          standSet[[j]] <- T
-        }
-        
-        pathToInclude <- system.file("settings", gsub('_model.csv','_standard_features_include.csv',analysisSettings$model[i]), package = "PCE")
-        incS <- read.csv(pathToInclude)$x
-        standSet$includedCovariateIds <- incS
-        
-        standardCovariates <- do.call(FeatureExtraction::createCovariateSettings,standSet)
-        
+      ParallelLogger::logInfo(paste0('Running ',analysisSettings$analysisId[i]))
+      
+      if(!overwrite){
+        plpRsultFolderExists <- dir.exists(file.path(outputFolder,cdmDatabaseName,analysisSettings$analysisId[i], 'plpResult','model'))
+        if(plpRsultFolderExists){ParallelLogger::logInfo(paste0('Result exists for ',analysisSettings$analysisId[i], ' not overwritting'))}
       } else{
-        standardCovariates <- NULL
+        plpRsultFolderExists <- F
       }
       
-      #getData
-      ParallelLogger::logInfo("Extracting data")
-      plpData <- tryCatch({getData(connectionDetails = connectionDetails,
-                                   cdmDatabaseSchema = cdmDatabaseSchema,
-                                   cdmDatabaseName = cdmDatabaseName,
-                                   cohortDatabaseSchema = cohortDatabaseSchema,
-                                   cohortTable = cohortTable,
-                                   cohortId = analysisSettings$targetId[i],
-                                   outcomeId = analysisSettings$outcomeId[i],
-                                   oracleTempSchema = oracleTempSchema,
-                                   model = analysisSettings$model[i],
-                                   standardCovariates = standardCovariates,
-                                   firstExposureOnly = firstExposureOnly,
-                                   sampleSize = sampleSize,
-                                   cdmVersion = cdmVersion)},
-                          error = function(e){ParallelLogger::logError(e); return(NULL)})
-      
-      if(!is.null(plpData)){
+      if(!plpRsultFolderExists){
         
-        
-        # get table 1
-        table1 <- tryCatch({getTable1(plpData)}, error = function(e){ParallelLogger::logError(e); return(NULL)})
-        
-        #create pop
-        ParallelLogger::logInfo("Creating population")
-        population <- tryCatch({PatientLevelPrediction::createStudyPopulation(plpData = plpData, 
-                                                                              outcomeId = analysisSettings$outcomeId[i],
-                                                                              riskWindowStart = riskWindowStart,
-                                                                              startAnchor = startAnchor,
-                                                                              riskWindowEnd = riskWindowEnd,
-                                                                              endAnchor = endAnchor,
-                                                                              firstExposureOnly = firstExposureOnly,
-                                                                              removeSubjectsWithPriorOutcome = removeSubjectsWithPriorOutcome,
-                                                                              priorOutcomeLookback = priorOutcomeLookback,
-                                                                              requireTimeAtRisk = requireTimeAtRisk,
-                                                                              minTimeAtRisk = minTimeAtRisk,
-                                                                              includeAllOutcomes = includeAllOutcomes)},
-                               error = function(e){ParallelLogger::logError(e); return(NULL)})
-        
-        
-        # if less than 20 outcomes dont run
-        if(sum(population$outcomeCount >0)<10){
-          ParallelLogger::logInfo('Less that 10 outcomes so not running...')
+        pathToStandard <- system.file("settings", gsub('_model.csv','_standard_features.csv',analysisSettings$model[i]), package = "PCE")
+        if(file.exists(pathToStandard)){
+          standTemp <- read.csv(pathToStandard)$x
+          
+          standSet <- list()
+          length(standSet) <- length(standTemp)
+          names(standSet) <- standTemp
+          for(j in 1:length(standSet)){
+            standSet[[j]] <- T
+          }
+          
+          pathToInclude <- system.file("settings", gsub('_model.csv','_standard_features_include.csv',analysisSettings$model[i]), package = "PCE")
+          incS <- read.csv(pathToInclude)$x
+          standSet$includedCovariateIds <- incS
+          
+          standardCovariates <- do.call(FeatureExtraction::createCovariateSettings,standSet)
+          
+        } else{
+          standardCovariates <- NULL
         }
         
-        if(sum(population$outcomeCount >0)>=10){
-          
+        #getData
+        ParallelLogger::logInfo("Extracting data")
+        plpData <- tryCatch({getData(connectionDetails = connectionDetails,
+                                     cdmDatabaseSchema = cdmDatabaseSchema,
+                                     cdmDatabaseName = cdmDatabaseName,
+                                     cohortDatabaseSchema = cohortDatabaseSchema,
+                                     cohortTable = cohortTable,
+                                     cohortId = analysisSettings$targetId[i],
+                                     outcomeId = analysisSettings$outcomeId[i],
+                                     oracleTempSchema = oracleTempSchema,
+                                     model = analysisSettings$model[i],
+                                     standardCovariates = standardCovariates,
+                                     firstExposureOnly = firstExposureOnly,
+                                     sampleSize = sampleSize,
+                                     cdmVersion = cdmVersion)},
+                            error = function(e){ParallelLogger::logError(e); return(NULL)})
         
-        if(!is.null(population)){
-          # apply the model:
-          plpModel <- list(model = getModel(analysisSettings$model[i]),
-                           analysisId = analysisSettings$analysisId[i],
-                           hyperParamSearch = NULL,
-                           index = NULL,
-                           trainCVAuc = NULL,
-                           modelSettings = list(model = analysisSettings$model[i], 
-                                                modelParameters = NULL),
-                           metaData = NULL,
-                           populationSettings = attr(population, "metaData"),
-                           trainingTime = NULL,
-                           varImp = data.frame(covariateId = getModel(analysisSettings$model[i])$covariateId,
-                                               covariateValue = getModel(analysisSettings$model[i])$points),
-                           dense = T,
-                           cohortId = analysisSettings$cohortId[i],
-                           outcomeId = analysisSettings$outcomeId[i],
-                           covariateMap = NULL,
-                           predict = predictExisting(model = analysisSettings$model[i])
-          )
-          attr(plpModel, "type") <- 'existing'
-          class(plpModel) <- 'plpModel'
+        if(!is.null(plpData)){
           
           
+          # get table 1
+          table1 <- tryCatch({getTable1(plpData)}, error = function(e){ParallelLogger::logError(e); return(NULL)})
           
-          ParallelLogger::logInfo("Applying and evaluating model")
-          result <- tryCatch({PatientLevelPrediction::applyModel(population = population,
-                                                                 plpData = plpData,
-                                                                 plpModel = plpModel)},
-                             error = function(e){ParallelLogger::logError(e); return(NULL)})
+          #create pop
+          ParallelLogger::logInfo("Creating population")
+          population <- tryCatch({PatientLevelPrediction::createStudyPopulation(plpData = plpData, 
+                                                                                outcomeId = analysisSettings$outcomeId[i],
+                                                                                riskWindowStart = riskWindowStart,
+                                                                                startAnchor = startAnchor,
+                                                                                riskWindowEnd = riskWindowEnd,
+                                                                                endAnchor = endAnchor,
+                                                                                firstExposureOnly = firstExposureOnly,
+                                                                                removeSubjectsWithPriorOutcome = removeSubjectsWithPriorOutcome,
+                                                                                priorOutcomeLookback = priorOutcomeLookback,
+                                                                                requireTimeAtRisk = requireTimeAtRisk,
+                                                                                minTimeAtRisk = minTimeAtRisk,
+                                                                                includeAllOutcomes = includeAllOutcomes)},
+                                 error = function(e){ParallelLogger::logError(e); return(NULL)})
           
-          if(!is.null(result)){
-            result$inputSetting$database <- cdmDatabaseName
-            result$inputSetting$modelSettings <- list(model = 'existing model', name = analysisSettings$model[i], param = getModel(analysisSettings$model[i]))
-            result$inputSetting$dataExtrractionSettings$covariateSettings <- plpData$metaData$call$covariateSettings
-            result$inputSetting$populationSettings <- attr(population, "metaData")
-            result$executionSummary  <- list()
-            result$model <- plpModel
-            result$analysisRef <- list()
-            result$covariateSummary <- tryCatch({PatientLevelPrediction:::covariateSummary(plpData = plpData, population = population, model = plpModel)},
-                                                error = function(e){ParallelLogger::logError(e); return(NULL)})
-            
-            
-            if(recalibrate){
-              # add code here
-              
-              # recalibrate each time 2/3/5/10 years and add to prediction plus save values
-              
-              predictionWeak <- result$prediction
-              
-              ### Extract data
-  
-              # this has to be modified per model...
-              #1- 0.9533^exp(x-86.61) = p
-              #log(log(1-p)/log(0.9533))+86.61 = x
-              
-              if(analysisSettings$model[i] == "pooled_female_non_black_model.csv"){
-                lp <- log(log(1-predictionWeak$value)/log(0.9665))- 29.18
-              }else if(analysisSettings$model[i] == "pooled_male_non_black_model.csv"){
-                lp <- log(log(1-predictionWeak$value)/log(0.9144)) + 61.18
-              }else if(analysisSettings$model[i] == "pooled_female_black_model.csv"){
-                lp <- log(log(1-predictionWeak$value)/log(0.9533))+86.61
-              } else{
-                lp <- log(log(1-predictionWeak$value)/log(0.8954)) + 19.54
-              }
-              
-              #t <- predictionWeak$survivalTime # observed follow up time
-              t <- apply(cbind(predictionWeak$daysToCohortEnd, predictionWeak$survivalTime), 1, min)
-              
-              y <- ifelse(predictionWeak$outcomeCount>0,1,0)  # observed outcome
-              
-              extras <- c()
-              for(yrs in c(2,3,5,10)){
-                t_temp <- t
-                y_temp <- y
-                y_temp[t_temp>365*yrs] <- 0
-                t_temp[t_temp>365*yrs] <- 365*yrs
-                S<- survival::Surv(t_temp, y_temp) 
-                #### Intercept + Slope recalibration
-                f.slope <- survival::coxph(S~lp)
-                h.slope <- max(survival::basehaz(f.slope)$hazard)  # maximum OK because of prediction_horizon
-                lp.slope <- stats::predict(f.slope)
-                p.slope.recal <- 1-exp(-h.slope*exp(lp.slope))
-                predictionWeak$value <- p.slope.recal
-                predictionWeak$new <- p.slope.recal
-                colnames(predictionWeak)[ncol(predictionWeak)] <- paste0('value',yrs,'year')
-                
-                # TODO save the recalibration stuff somewhere?
-                extras <- rbind(extras,
-                                c(analysisSettings$analysisId[i],"validation",paste0("h.slope_",yrs),h.slope),
-                                c(analysisSettings$analysisId[i],"validation",paste0("f.slope_",yrs),f.slope$coefficients['lp']))
-                
-              }
-              
-              
-              result$prediction <- predictionWeak # use 10 year prediction value
-              performance <- PatientLevelPrediction::evaluatePlp(result$prediction, plpData)
-              
-              # reformatting the performance 
-              performance <- reformatePerformance(performance,analysisSettings$analysisId[i])
-              
-              result$performanceEvaluation <- performance
-              
-             result$performanceEvaluation$evaluationStatistics <- rbind(result$performanceEvaluation$evaluationStatistics,extras)
-
-            }
-            
-            
-            if(recalibrateInterceptOnly & !recalibrate){
-              # recalibrate each time 2/3/5/10 years and add to prediction plus save values
-              
-              predictionWeak <- result$prediction
-              
-              ### Extract data
-              
-              # this has to be modified per model...
-              #1- 0.9533^exp(x-86.61) = p
-              #log(log(1-p)/log(0.9533))+86.61 = x
-              
-              if(analysisSettings$model[i] == "pooled_female_non_black_model.csv"){
-                lp <- log(log(1-predictionWeak$value)/log(0.9665))- 29.18
-              }else if(analysisSettings$model[i] == "pooled_male_non_black_model.csv"){
-                lp <- log(log(1-predictionWeak$value)/log(0.9144)) + 61.18
-              }else if(analysisSettings$model[i] == "pooled_female_black_model.csv"){
-                lp <- log(log(1-predictionWeak$value)/log(0.9533))+86.61
-              } else{
-                lp <- log(log(1-predictionWeak$value)/log(0.8954)) + 19.54
-              }
-              
-              #t <- predictionWeak$survivalTime # observed follow up time
-              t <- apply(cbind(predictionWeak$daysToCohortEnd, predictionWeak$survivalTime), 1, min)
-              y <- ifelse(predictionWeak$outcomeCount>0,1,0)  # observed outcome
-              
-              extras <- c()
-              for(yrs in c(2,3,5,10)){
-                t_temp <- t
-                y_temp <- y
-                y_temp[t>365*yrs] <- 0
-                t_temp[t>365*yrs] <- 365*yrs
-                S<- survival::Surv(t_temp, y_temp) 
-                
-                f.intercept <- survival::coxph(S~offset(lp))
-                h.intercept <- max(survival::basehaz(f.intercept)$hazard)  # maximum OK because of prediction_horizon
-                p.intercept.recal <- 1-exp(-h.intercept*exp(lp-mean(lp)))
-                
-                predictionWeak$value <- p.intercept.recal
-                predictionWeak$new <- p.intercept.recal
-                colnames(predictionWeak)[ncol(predictionWeak)] <- paste0('value',yrs,'year')
-                
-                # TODO save the recalibration stuff somewhere?
-                extras <- rbind(extras,
-                                c(analysisSettings$analysisId[i],"validation",paste0("h.intercept_",yrs),h.intercept))
-                
-              }
-              
-              
-              result$prediction <- predictionWeak # use 10 year prediction value
-              performance <- PatientLevelPrediction::evaluatePlp(result$prediction, plpData)
-              
-              # reformatting the performance 
-              performance <- reformatePerformance(performance,analysisSettings$analysisId[i])
-              
-              result$performanceEvaluation <- performance
-              
-              result$performanceEvaluation$evaluationStatistics <- rbind(result$performanceEvaluation$evaluationStatistics,extras)
-              
-              
-            }
-            
-            # CUSTOM CODE FOR SURVIVAL METRICS
-            #=======================================
-            # here we add the 2/3/5 year surivival metrics to prediction
-            result <- tryCatch({getSurvivialMetrics(plpResult = result, 
-                                          recalibrate = recalibrate | recalibrateInterceptOnly, 
-                                          analysisId = analysisSettings$analysisId[i],
-                                          model = analysisSettings$model[i])},
-                               error = function(e){ParallelLogger::logError(e); return(result)})
-            #=======================================
-            
           
-            
-            if(!dir.exists(file.path(outputFolder,cdmDatabaseName))){
-              dir.create(file.path(outputFolder,cdmDatabaseName))
-            }
-            ParallelLogger::logInfo("Saving results")
-            PatientLevelPrediction::savePlpResult(result, file.path(outputFolder,cdmDatabaseName,analysisSettings$analysisId[i], 'plpResult'))
-            saveRDS(table1, file.path(outputFolder,cdmDatabaseName,analysisSettings$analysisId[i], 'plpResult','table1.rds'))
-            ParallelLogger::logInfo(paste0("Results saved to:",file.path(outputFolder,cdmDatabaseName,analysisSettings$analysisId[i])))
-           
-            
-          } # result not null
+          # if less than 20 outcomes dont run
+          if(sum(population$outcomeCount >0)<10){
+            ParallelLogger::logInfo('Less that 10 outcomes so not running...')
+          }
           
-        } # population not null
+          if(sum(population$outcomeCount >0)>=10){
+            
+            
+            if(!is.null(population)){
+              # apply the model:
+              plpModel <- list(model = getModel(analysisSettings$model[i]),
+                               analysisId = analysisSettings$analysisId[i],
+                               hyperParamSearch = NULL,
+                               index = NULL,
+                               trainCVAuc = NULL,
+                               modelSettings = list(model = analysisSettings$model[i], 
+                                                    modelParameters = NULL),
+                               metaData = NULL,
+                               populationSettings = attr(population, "metaData"),
+                               trainingTime = NULL,
+                               varImp = data.frame(covariateId = getModel(analysisSettings$model[i])$covariateId,
+                                                   covariateValue = getModel(analysisSettings$model[i])$points),
+                               dense = T,
+                               cohortId = analysisSettings$cohortId[i],
+                               outcomeId = analysisSettings$outcomeId[i],
+                               covariateMap = NULL,
+                               predict = predictExisting(model = analysisSettings$model[i])
+              )
+              attr(plpModel, "type") <- 'existing'
+              class(plpModel) <- 'plpModel'
+              
+              
+              
+              ParallelLogger::logInfo("Applying and evaluating model")
+              result <- tryCatch({PatientLevelPrediction::applyModel(population = population,
+                                                                     plpData = plpData,
+                                                                     plpModel = plpModel)},
+                                 error = function(e){ParallelLogger::logError(e); return(NULL)})
+              
+              if(!is.null(result)){
+                result$inputSetting$database <- cdmDatabaseName
+                result$inputSetting$modelSettings <- list(model = 'existing model', name = analysisSettings$model[i], param = getModel(analysisSettings$model[i]))
+                result$inputSetting$dataExtrractionSettings$covariateSettings <- plpData$metaData$call$covariateSettings
+                result$inputSetting$populationSettings <- attr(population, "metaData")
+                result$executionSummary  <- list()
+                result$model <- plpModel
+                result$analysisRef <- list()
+                result$covariateSummary <- tryCatch({PatientLevelPrediction:::covariateSummary(plpData = plpData, population = population, model = plpModel)},
+                                                    error = function(e){ParallelLogger::logError(e); return(NULL)})
+                
+                
+                if(recalibrate){
+                  # add code here
+                  
+                  # recalibrate each time 2/3/5/10 years and add to prediction plus save values
+                  
+                  predictionWeak <- result$prediction
+                  
+                  ### Extract data
+                  
+                  # this has to be modified per model...
+                  #1- 0.9533^exp(x-86.61) = p
+                  #log(log(1-p)/log(0.9533))+86.61 = x
+                  
+                  if(analysisSettings$model[i] == "pooled_female_non_black_model.csv"){
+                    lp <- log(log(1-predictionWeak$value)/log(0.9665))- 29.18
+                  }else if(analysisSettings$model[i] == "pooled_male_non_black_model.csv"){
+                    lp <- log(log(1-predictionWeak$value)/log(0.9144)) + 61.18
+                  }else if(analysisSettings$model[i] == "pooled_female_black_model.csv"){
+                    lp <- log(log(1-predictionWeak$value)/log(0.9533))+86.61
+                  } else{
+                    lp <- log(log(1-predictionWeak$value)/log(0.8954)) + 19.54
+                  }
+                  
+                  #t <- predictionWeak$survivalTime # observed follow up time
+                  t <- apply(cbind(predictionWeak$daysToCohortEnd, predictionWeak$survivalTime), 1, min)
+                  
+                  y <- ifelse(predictionWeak$outcomeCount>0,1,0)  # observed outcome
+                  
+                  extras <- c()
+                  for(yrs in c(2,3,5,10)){
+                    t_temp <- t
+                    y_temp <- y
+                    y_temp[t_temp>365*yrs] <- 0
+                    t_temp[t_temp>365*yrs] <- 365*yrs
+                    S<- survival::Surv(t_temp, y_temp) 
+                    #### Intercept + Slope recalibration
+                    f.slope <- survival::coxph(S~lp)
+                    h.slope <- max(survival::basehaz(f.slope)$hazard)  # maximum OK because of prediction_horizon
+                    lp.slope <- stats::predict(f.slope)
+                    p.slope.recal <- 1-exp(-h.slope*exp(lp.slope))
+                    predictionWeak$value <- p.slope.recal
+                    predictionWeak$new <- p.slope.recal
+                    colnames(predictionWeak)[ncol(predictionWeak)] <- paste0('value',yrs,'year')
+                    
+                    # TODO save the recalibration stuff somewhere?
+                    extras <- rbind(extras,
+                                    c(analysisSettings$analysisId[i],"validation",paste0("h.slope_",yrs),h.slope),
+                                    c(analysisSettings$analysisId[i],"validation",paste0("f.slope_",yrs),f.slope$coefficients['lp']))
+                    
+                  }
+                  
+                  
+                  result$prediction <- predictionWeak # use 10 year prediction value
+                  performance <- PatientLevelPrediction::evaluatePlp(result$prediction, plpData)
+                  
+                  # reformatting the performance 
+                  performance <- reformatePerformance(performance,analysisSettings$analysisId[i])
+                  
+                  result$performanceEvaluation <- performance
+                  
+                  result$performanceEvaluation$evaluationStatistics <- rbind(result$performanceEvaluation$evaluationStatistics,extras)
+                  
+                }
+                
+                
+                if(recalibrateInterceptOnly & !recalibrate){
+                  # recalibrate each time 2/3/5/10 years and add to prediction plus save values
+                  
+                  predictionWeak <- result$prediction
+                  
+                  ### Extract data
+                  
+                  # this has to be modified per model...
+                  #1- 0.9533^exp(x-86.61) = p
+                  #log(log(1-p)/log(0.9533))+86.61 = x
+                  
+                  if(analysisSettings$model[i] == "pooled_female_non_black_model.csv"){
+                    lp <- log(log(1-predictionWeak$value)/log(0.9665))- 29.18
+                  }else if(analysisSettings$model[i] == "pooled_male_non_black_model.csv"){
+                    lp <- log(log(1-predictionWeak$value)/log(0.9144)) + 61.18
+                  }else if(analysisSettings$model[i] == "pooled_female_black_model.csv"){
+                    lp <- log(log(1-predictionWeak$value)/log(0.9533))+86.61
+                  } else{
+                    lp <- log(log(1-predictionWeak$value)/log(0.8954)) + 19.54
+                  }
+                  
+                  #t <- predictionWeak$survivalTime # observed follow up time
+                  t <- apply(cbind(predictionWeak$daysToCohortEnd, predictionWeak$survivalTime), 1, min)
+                  y <- ifelse(predictionWeak$outcomeCount>0,1,0)  # observed outcome
+                  
+                  extras <- c()
+                  for(yrs in c(2,3,5,10)){
+                    t_temp <- t
+                    y_temp <- y
+                    y_temp[t>365*yrs] <- 0
+                    t_temp[t>365*yrs] <- 365*yrs
+                    S<- survival::Surv(t_temp, y_temp) 
+                    
+                    f.intercept <- survival::coxph(S~offset(lp))
+                    h.intercept <- max(survival::basehaz(f.intercept)$hazard)  # maximum OK because of prediction_horizon
+                    p.intercept.recal <- 1-exp(-h.intercept*exp(lp-mean(lp)))
+                    
+                    predictionWeak$value <- p.intercept.recal
+                    predictionWeak$new <- p.intercept.recal
+                    colnames(predictionWeak)[ncol(predictionWeak)] <- paste0('value',yrs,'year')
+                    
+                    # TODO save the recalibration stuff somewhere?
+                    extras <- rbind(extras,
+                                    c(analysisSettings$analysisId[i],"validation",paste0("h.intercept_",yrs),h.intercept))
+                    
+                  }
+                  
+                  
+                  result$prediction <- predictionWeak # use 10 year prediction value
+                  performance <- PatientLevelPrediction::evaluatePlp(result$prediction, plpData)
+                  
+                  # reformatting the performance 
+                  performance <- reformatePerformance(performance,analysisSettings$analysisId[i])
+                  
+                  result$performanceEvaluation <- performance
+                  
+                  result$performanceEvaluation$evaluationStatistics <- rbind(result$performanceEvaluation$evaluationStatistics,extras)
+                  
+                  
+                }
+                
+                # CUSTOM CODE FOR SURVIVAL METRICS
+                #=======================================
+                # here we add the 2/3/5 year surivival metrics to prediction
+                result <- tryCatch({getSurvivialMetrics(plpResult = result, 
+                                                        recalibrate = recalibrate | recalibrateInterceptOnly, 
+                                                        analysisId = analysisSettings$analysisId[i],
+                                                        model = analysisSettings$model[i])},
+                                   error = function(e){ParallelLogger::logError(e); return(result)})
+                #=======================================
+                
+                
+                
+                if(!dir.exists(file.path(outputFolder,cdmDatabaseName))){
+                  dir.create(file.path(outputFolder,cdmDatabaseName))
+                }
+                ParallelLogger::logInfo("Saving results")
+                PatientLevelPrediction::savePlpResult(result, file.path(outputFolder,cdmDatabaseName,analysisSettings$analysisId[i], 'plpResult'))
+                saveRDS(table1, file.path(outputFolder,cdmDatabaseName,analysisSettings$analysisId[i], 'plpResult','table1.rds'))
+                ParallelLogger::logInfo(paste0("Results saved to:",file.path(outputFolder,cdmDatabaseName,analysisSettings$analysisId[i])))
+                
+                
+              } # result not null
+              
+            } # population not null
+            
+          } # count >= 10
+          
+        }# plpData not null
         
-      } # plpData not null
+      }# overwrite or non exists
       
-    }
     }
   }
   

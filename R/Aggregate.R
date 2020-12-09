@@ -75,7 +75,7 @@ getAggregatePerm <- function(outputFolder,cdmDatabaseName){
       result$performanceEvaluation$thresholdSummary$analysisId <- paste0('Analysis_',50+(2*i)-1)
       
       result <- getSurvivialMetrics(plpResult = result, 
-                                    recalibrate = F, 
+                                    recalibrate = T, 
                                     analysisId = paste0('Analysis_',50+(2*i)-1),
                                     model = 'combined')
       #=======================================
@@ -172,7 +172,7 @@ getAggregatePerm <- function(outputFolder,cdmDatabaseName){
       
       
       result <- getSurvivialMetrics(plpResult = result, 
-                                    recalibrate = F, 
+                                    recalibrate = T, 
                                     analysisId = paste0('Analysis_',50+2*i),
                                     model = 'combined')
       #=======================================

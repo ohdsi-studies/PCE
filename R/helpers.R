@@ -343,8 +343,8 @@ getSurvivialMetrics <- function(plpResult, recalibrate, analysisId, model){
                      fun=function(pr)log(-log(pr)))},
                  error = function(e){ParallelLogger::logError(e); return(NULL)})
     if(!is.null(w)){
-      e.mean<-mean(abs(w$actual - w$p))
-      e.90<-stats::quantile((abs(w$actual - w$p)),0.9)
+      e.mean <- mean(abs(w$actual - w$p), na.rm=T)
+      e.90 <- stats::quantile((abs(w$actual - w$p)),0.9, na.rm=T)
       
       extras <- rbind(c(analysisId = analysisId,
                         Eval = "validation",Metric = paste0("E-statistic_",yrs),Value =e.mean),
