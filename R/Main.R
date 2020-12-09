@@ -400,7 +400,7 @@ execute <- function(connectionDetails,
                                           recalibrate = recalibrate | recalibrateInterceptOnly, 
                                           analysisId = analysisSettings$analysisId[i],
                                           model = analysisSettings$model[i])},
-                               error = function(e){ParallelLogger::logError(e); return(NULL)})
+                               error = function(e){ParallelLogger::logError(e); return(result)})
             #=======================================
             
           

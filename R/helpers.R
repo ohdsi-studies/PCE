@@ -386,7 +386,7 @@ getTable1 <- function(plpData){
   md <- attr(plpData$covariateData, 'metaData')
   meas <- as.data.frame(matrix(unlist(md$table1), ncol=4, byrow = T))
   colnames(meas) <- c('covariateId', 'mean', 'stdev', 'N')
-  cr <- plpData$covariateData$covariateRef %>% collect()
+  cr <- plpData$covariateData$covariateRef %>% dplyr::collect()
   meas <- merge(meas, cr[,c('covariateId','covariateName')], by='covariateId')
   meas <- meas[,c('covariateName', 'mean', 'stdev', 'N')]
   

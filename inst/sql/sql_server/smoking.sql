@@ -5,29 +5,6 @@ CREATE TABLE #Codesets (
 ;
 
 INSERT INTO #Codesets (codeset_id, concept_id)
-SELECT 0 as codeset_id, c.concept_id FROM (select distinct I.concept_id FROM
-( 
-  select concept_id from @vocabulary_database_schema.CONCEPT where concept_id in (40766945,437264,4005823,4209423)
-UNION  select c.concept_id
-  from @vocabulary_database_schema.CONCEPT c
-  join @vocabulary_database_schema.CONCEPT_ANCESTOR ca on c.concept_id = ca.descendant_concept_id
-  and ca.ancestor_concept_id in (40766945,437264,4005823,4209423)
-  and c.invalid_reason is null
-
-) I
-LEFT JOIN
-(
-  select concept_id from @vocabulary_database_schema.CONCEPT where concept_id in (4218741,4310250,4103418)
-UNION  select c.concept_id
-  from @vocabulary_database_schema.CONCEPT c
-  join @vocabulary_database_schema.CONCEPT_ANCESTOR ca on c.concept_id = ca.descendant_concept_id
-  and ca.ancestor_concept_id in (4218741,4310250,4103418)
-  and c.invalid_reason is null
-
-) E ON I.concept_id = E.concept_id
-WHERE E.concept_id is null
-) C;
-INSERT INTO #Codesets (codeset_id, concept_id)
 SELECT 1 as codeset_id, c.concept_id FROM (select distinct I.concept_id FROM
 ( 
   select concept_id from @vocabulary_database_schema.CONCEPT where concept_id in (40766945,44805737,762882,4209423,44804580,44802794,4217594,44810931,4199818,4295004,4041306,4005823,4275495)
@@ -40,11 +17,11 @@ UNION  select c.concept_id
 ) I
 LEFT JOIN
 (
-  select concept_id from @vocabulary_database_schema.CONCEPT where concept_id in (4036556,4038735,4218741,764468,765685,764470,4310250,4036560,4036085,4038731,4036084,4043053,4103418,4036087,37017610)
+  select concept_id from @vocabulary_database_schema.CONCEPT where concept_id in (4036556,4038735,4218741,764468,765685,764470,4310250,4036560,4036085,4038731,4036084,4043053,4103418,4036087,37017610,4222303,4144272,4052464,37017812)
 UNION  select c.concept_id
   from @vocabulary_database_schema.CONCEPT c
   join @vocabulary_database_schema.CONCEPT_ANCESTOR ca on c.concept_id = ca.descendant_concept_id
-  and ca.ancestor_concept_id in (4036556,4038735,4218741,764468,765685,764470,4310250,4036560,4036085,4038731,4036084,4043053,4103418,4036087,37017610)
+  and ca.ancestor_concept_id in (4036556,4038735,4218741,764468,765685,764470,4310250,4036560,4036085,4038731,4036084,4043053,4103418,4036087,37017610,4222303,4144272,4052464,37017812)
   and c.invalid_reason is null
 
 ) E ON I.concept_id = E.concept_id
