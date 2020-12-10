@@ -229,7 +229,7 @@ execute <- function(connectionDetails,
                                  error = function(e){ParallelLogger::logError(e); return(NULL)})
           
           
-          # if less than 20 outcomes dont run
+          # if less than 10 outcomes dont run
           if(sum(population$outcomeCount >0)<10){
             ParallelLogger::logInfo('Less that 10 outcomes so not running...')
           }

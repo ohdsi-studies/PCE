@@ -18,7 +18,7 @@ The objective of this study is to perform a large-scale external validation of t
 Instructions To Install and Run Package From Github
 ===================
 
-- Make sure you have PatientLevelPrediction installed:
+- Make sure you have PatientLevelPrediction installed (this requires having Java and the OHDSI FeatureExtraction R package installed):
 
 ```r
   # get the latest PatientLevelPrediction
@@ -67,8 +67,12 @@ oracleTempSchema <- NULL
 # table name where the cohorts will be generated
 cohortTable <- 'PCECohort'
 
-# TAR settings
+
+# If you need to sample the data for speed (not useful when doing validation as model application is quick)
 sampleSize <- NULL
+
+# TAR settings
+#========== Not recommended to edit ====
 riskWindowStart <- 1
 startAnchor <- 'cohort start'
 riskWindowEnd <- 10*365
@@ -79,9 +83,7 @@ priorOutcomeLookback <- 99999
 requireTimeAtRisk <- F
 minTimeAtRisk <- 1
 includeAllOutcomes <- T
-
-
-#=======================
+#=======================================
 
 # with original calibration
 PCE::execute(connectionDetails = connectionDetails,
@@ -91,7 +93,7 @@ PCE::execute(connectionDetails = connectionDetails,
                                 cohortTable = cohortTable,
                                 setting = data.frame(tId = rep(c(1325,1322,1326,1328,
                                                                  1358,1359,1360,1361),2), 
-                                                     oId = c(rep(1354,8),rep(1357,8)), 
+                                                     oId = c(rep(1466,8),rep(1357,8)),
                                                      model = rep(c('pooled_male_black_model.csv',
                                                                    'pooled_female_black_model.csv',
                                                                    'pooled_male_non_black_model.csv',
@@ -130,19 +132,18 @@ PCE::execute(connectionDetails = connectionDetails,
              cohortDatabaseSchema = cohortDatabaseSchema,
              cohortTable = cohortTable,
              setting = data.frame(tId = rep(c(1325,1322,1326,1328,
-                                              1358,1359,1360,1361),4), 
-                                  oId = c(rep(1354,8),rep(1357,8),
-                                          rep(1365,8),rep(1366,8)),
-                                  model = rep(c('pooled_male_black_model.csv',
-                                                'pooled_female_black_model.csv',
-                                                'pooled_male_non_black_model.csv',
-                                                'pooled_female_non_black_model.csv',
-                                                'pooled_male_black_model.csv',
-                                                'pooled_female_black_model.csv',
-                                                'pooled_male_non_black_model.csv',
-                                                'pooled_female_non_black_model.csv'
-                                  ),4)
-             ),
+                                                                 1358,1359,1360,1361),2), 
+                                                     oId = c(rep(1466,8),rep(1357,8)),
+                                                     model = rep(c('pooled_male_black_model.csv',
+                                                                   'pooled_female_black_model.csv',
+                                                                   'pooled_male_non_black_model.csv',
+                                                                   'pooled_female_non_black_model.csv',
+                                                                   'pooled_male_black_model.csv',
+                                                                   'pooled_female_black_model.csv',
+                                                                   'pooled_male_non_black_model.csv',
+                                                                   'pooled_female_non_black_model.csv'
+                                                                   ),2)
+                                ),
              sampleSize = sampleSize, 
              recalibrateInterceptOnly =  T,
              riskWindowStart = riskWindowStart,
@@ -173,18 +174,18 @@ PCE::execute(connectionDetails = connectionDetails,
              cohortDatabaseSchema = cohortDatabaseSchema,
              cohortTable = cohortTable,
              setting = data.frame(tId = rep(c(1325,1322,1326,1328,
-                                              1358,1359,1360,1361),2), 
-                                  oId = c(rep(1354,8),rep(1357,8)), 
-                                  model = rep(c('pooled_male_black_model.csv',
-                                                'pooled_female_black_model.csv',
-                                                'pooled_male_non_black_model.csv',
-                                                'pooled_female_non_black_model.csv',
-                                                'pooled_male_black_model.csv',
-                                                'pooled_female_black_model.csv',
-                                                'pooled_male_non_black_model.csv',
-                                                'pooled_female_non_black_model.csv'
-                                  ),2)
-             ),
+                                                                 1358,1359,1360,1361),2), 
+                                                     oId = c(rep(1466,8),rep(1357,8)),
+                                                     model = rep(c('pooled_male_black_model.csv',
+                                                                   'pooled_female_black_model.csv',
+                                                                   'pooled_male_non_black_model.csv',
+                                                                   'pooled_female_non_black_model.csv',
+                                                                   'pooled_male_black_model.csv',
+                                                                   'pooled_female_black_model.csv',
+                                                                   'pooled_male_non_black_model.csv',
+                                                                   'pooled_female_non_black_model.csv'
+                                                                   ),2)
+                                ),
              sampleSize = sampleSize, 
              recalibrate = T,
              riskWindowStart = riskWindowStart,
@@ -210,5 +211,11 @@ PCE::execute(connectionDetails = connectionDetails,
 
 
 ```
+
+
+# Output
+
+After running the code go to the location you specified as outputFolder. Inside this location you should see three folders starting with the value you specified as cdmDatabaseName. For example if I set cdmDatabaseName = 'testData' then I would see: 'testData', 'testData_recalibrate' and 'teatData_recalibrate' folders. In addition there should be three zipped files for these three folders. Continuing the example, then I would see: 'testData.zip', 'testData_recalibrate.zip' and 'teatData_recalibrate.zip' files. These are the results to be shared. We recommend that you inspect the files before sending to make sure you are happy. They will contain various csv files that can be opened and inspected.result
+
 # Development status
 Under development.
