@@ -244,8 +244,14 @@ predictExisting <- function(model){
 
 
 getSurvivialMetrics <- function(plpResult, recalibrate, analysisId, model){
+  ParallelLogger::logInfo('Running getSurvivialMetrics')
   
   prediction <- plpResult$prediction
+  # adding below incase of 1 value prediction
+  if(sum(prediction$value==0)>0){
+    ParallelLogger::logInfo('1 values found')
+    prediction$value[prediction$value==1] <- 1-0.0000001
+    }
   
   # if you havent recalibrated use the original values
   if(!recalibrate){
@@ -284,6 +290,7 @@ getSurvivialMetrics <- function(plpResult, recalibrate, analysisId, model){
   y <- ifelse(plpResult$prediction$outcomeCount > 0, 1, 0)
   
 
+    ParallelLogger::logInfo('Calculating net benefit')
   # now to calculate the metrics T 2/3/5/10 year
   nbSummary <- c()
   for(yrs in c(2,3,5,10)){
@@ -303,10 +310,10 @@ getSurvivialMetrics <- function(plpResult, recalibrate, analysisId, model){
       nbSummary <- rbind(nbSummary,
                          data.frame(analysisId = analysisId, time = yrs, results$net.benefit))
     }
-    
+    ParallelLogger::logTrace('Net benefit finished')
     
     # outcome count per time period
-    
+    ParallelLogger::logInfo('Calculating survival rates')
     out <- tryCatch({summary(survival::survfit(survival::Surv(t_temp, y_temp) ~ 1), times = 365*yrs)},
                     error = function(e){ParallelLogger::logError(e); return(NULL)})
     
@@ -322,6 +329,7 @@ getSurvivialMetrics <- function(plpResult, recalibrate, analysisId, model){
     }
     
     # concordance
+    ParallelLogger::logInfo('Calculating c-stat')
     ### Observed survival function object (truncated at prediction_horizon)
     conc <- tryCatch({survival::concordance(S~p, reverse=TRUE)},
                      error = function(e){ParallelLogger::logError(e); return(NULL)})
@@ -338,6 +346,7 @@ getSurvivialMetrics <- function(plpResult, recalibrate, analysisId, model){
     }
   
     ### E-stats
+    ParallelLogger::logInfo('Calculating e-stat')
     w<- tryCatch({rms::val.surv(est.surv=1-p,S=S,
                      u=365*yrs, 
                      fun=function(pr)log(-log(pr)))},
@@ -358,6 +367,8 @@ getSurvivialMetrics <- function(plpResult, recalibrate, analysisId, model){
   plpResult$performanceEvaluation$nbSummary <- nbSummary
   
   # add in calibration for 10-year survival 
+  ParallelLogger::logInfo('Calculating survival calibration values')
+                 
   S<- survival::Surv(t, y) 
   groups<-Hmisc::cut2(plpResult$prediction$value,g=100)
   n.groups<-length(levels(groups))
