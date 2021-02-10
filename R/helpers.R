@@ -297,7 +297,7 @@ getSurvivialMetrics <- function(plpResult, recalibrate, analysisId, model){
     # netbenfit
     preddat <- data.frame(p = p, t=t_temp, y=y_temp)
     results = tryCatch({stdca(data=preddat, outcome="y", ttoutcome="t", timepoint=365*yrs, 
-                              predictors="p", xstart = 0.001, xstop = max(p), xby = 0.001, smooth=F)},
+                              predictors="p", xstart = min(p), xstop = max(p), xby = (max(p)-min(p))/100, smooth=F)},
                        error = function(e){ParallelLogger::logError(e); return(NULL)})
     if(!is.null(results)){
       nbSummary <- rbind(nbSummary,
