@@ -109,7 +109,7 @@ createAgeCovariateSettings <- function(covariateName = 'Age at index',
                             analysisId = analysisId
   )
   
-  attr(covariateSettings, "fun") <- "getAgeCovariateData"
+  attr(covariateSettings, "fun") <- "PCE::getAgeCovariateData"
   class(covariateSettings) <- "covariateSettings"
   return(covariateSettings)
 }

@@ -137,7 +137,7 @@ createCohortCovariateSettings <- function(covariateName, covariateId,
                             lnAgeInteraction = lnAgeInteraction,
                             analysisId = analysisId)
   
-  attr(covariateSettings, "fun") <- "getCohortCovariateData"
+  attr(covariateSettings, "fun") <- "PCE::getCohortCovariateData"
   class(covariateSettings) <- "covariateSettings"
   return(covariateSettings)
 }

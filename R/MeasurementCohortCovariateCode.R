@@ -196,7 +196,7 @@ createMeasurementCohortCovariateSettings <- function(covariateName, conceptSet,
                             analysisId = analysisId
                             )
   
-  attr(covariateSettings, "fun") <- "getMeasurementCohortCovariateData"
+  attr(covariateSettings, "fun") <- "PCE::getMeasurementCohortCovariateData"
   class(covariateSettings) <- "covariateSettings"
   return(covariateSettings)
 }
